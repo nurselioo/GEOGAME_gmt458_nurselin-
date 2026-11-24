@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOPO-RUSH | Total Station Kot Avı (GeoGame)</title>
+
+  <!-- Google Fonts: JetBrains Mono & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ÜST BİLGİ PANELİ (HUD) -->
+  <header class="hud-bar">
+    <div class="brand">
+      <span class="brand-icon">📐</span>
+      <div>
+        <h1>TOPO-RUSH</h1>
+        <span class="subtitle">Total Station Kot & Görüş Hattı Simülasyonu</span>
+      </div>
+    </div>
+
+    <div class="hud-metrics">
+      <div class="metric-box">
+        <span class="metric-label">BÖLGE / ETAP</span>
+        <span id="hud-stage" class="metric-value">1 / 4</span>
+      </div>
+      <div class="metric-box" id="timer-box">
+        <span class="metric-label">KALAN SÜRE</span>
+        <span id="hud-timer" class="metric-value mono">01:30</span>
+      </div>
+      <div class="metric-box">
+        <span class="metric-label">CAN</span>
+        <span id="hud-lives" class="metric-value hearts">♥ ♥ ♥</span>
+      </div>
+      <div class="metric-box highlight">
+        <span class="metric-label">SKOR</span>
+        <span id="hud-score" class="metric-value mono">0</span>
+      </div>
+      <div class="metric-box">
+        <span class="metric-label">REKOR</span>
+        <span id="hud-highscore" class="metric-value mono">0</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ANA OYUN ALANI -->
+  <main class="game-container">
+    <!-- SOL PANEL: İNTERAKTİF HARİTA -->
+    <section class="map-wrapper">
+      <div id="map"></div>
+
+      <!-- Harita Üzeri Yüzen Bilgi Bandı -->
+      <div class="map-overlay-top">
+        <div class="region-badge">
+          <span class="pulse-dot"></span>
+          <span id="region-title">Görev Yükleniyor...</span>
+        </div>
+        <div class="map-controls">
+          <button id="btn-layer-topo" class="layer-btn active" title="İzohipsli Topoğrafik Harita">Topoğrafik</button>
+          <button id="btn-layer-sat" class="layer-btn" title="Uydu Görüntüsü">Uydu</button>
+        </div>
+      </div>
+
+      <!-- Harita Altı İpucu & Durum Mesajı -->
+      <div id="toast-banner" class="toast-banner">
+        Haritada tüm hedefleri görebilecek hakim bir noktaya tıklayarak <strong>Total Station</strong> kurun! (-4 sn)
+      </div>
+    </section>
+
+    <!-- SAĞ PANEL: GÖREV LİSTESİ & KESİT PROFİLİ -->
+    <aside class="side-panel">
+      <!-- İstasyon Özeti -->
+      <div class="panel-card station-card">
+        <div class="card-header">
+          <h2>📡 İSTASYON DURUMU</h2>
+          <span id="station-coords" class="mono small-text">Kurulum Bekleniyor</span>
+        </div>
+        <div class="station-stats">
+          <div>
+            <span class="stat-lbl">İstasyon Kotu (H₀)</span>
+            <strong id="station-elev" class="mono">-- m</strong>
+          </div>
+          <div>
+            <span class="stat-lbl">Kurulum Sayısı</span>
+            <strong id="station-count" class="mono">0</strong>
+          </div>
+          <div>
+            <span class="stat-lbl">Max Menzil</span>
+            <strong id="station-range" class="mono">2500 m</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hedef Noktalar (Miralar) -->
+      <div class="panel-card targets-card">
+        <div class="card-header">
+          <h2>🎯 HEDEF NOKTALAR (MİRA)</h2>
+          <span id="targets-progress" class="badge-pill">0 / 3</span>
+        </div>
+        <ul id="target-list" class="target-list">
+          <!-- JS tarafından dinamik doldurulacak -->
+        </ul>
+      </div>
+
+      <!-- Chart.js Arazi Kesit Profili -->
+      <div class="panel-card chart-card">
+        <div class="card-header">
+          <h2>📈 ARAZİ KESİT PROFİLİ</h2>
+          <select id="profile-selector" class="profile-select" disabled>
+            <option value="0">Hedef 1 (M1) Kesiti</option>
+            <option value="1">Hedef 2 (M2) Kesiti</option>
+            <option value="2">Hedef 3 (M3) Kesiti</option>
+          </select>
+        </div>
+        <div class="chart-container">
+          <canvas id="elevationChart"></canvas>
+        </div>
+        <p id="los-status-text" class="los-note">
+          Kesit grafiğini görmek için haritada bir noktaya tıklayıp aleti kurun.
+        </p>
+      </div>
+
+      <!-- Sonraki Etap Butonu -->
+      <button id="btn-next-stage" class="primary-btn hidden">
+        Sonraki Bölgeye Geç (+15 sn Bonus) ➔
+      </button>
+    </aside>
+  </main>
+
+  <!-- BAŞLANGIÇ MODALI -->
+  <div id="start-modal" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="modal-badge">GMT 458 • WEB GIS GEOGAME</div>
+      <h2>📐 TOPO-RUSH: Total Station Kot Avı</h2>
+      <p class="modal-desc">
+        Türkiye'nin farklı topoğrafik bölgelerinde belirlenen <strong>3 hedef noktanın (mira)</strong> kotlarını okumak için araziye <strong>Total Station</strong> kur!
+      </p>
+      <ul class="rules-list">
+        <li>🗺️ <strong>İzohipsleri Oku:</strong> Eşyükselti eğrilerini incele, tüm hedefleri arazi engeline takılmadan görebilecek hakim bir noktaya tıkla.</li>
+        <li>⏱️ <strong>Zamana Karşı Yarış:</strong> Toplam <strong>90 saniyen</strong> var. Her yeni istasyon kurulumu <strong>-4 saniye</strong> harcar; etabı tamamlamak <strong>+15 saniye</strong> kazandırır.</li>
+        <li>📈 <strong>Canlı Kesit Analizi:</strong> İstasyon ile hedef arasında tepe varsa görüş kesilir (Kırmızı). Aleti daha uygun bir kota taşı!</li>
+        <li>♥ <strong>Dikkatli Ol:</strong> Göl/deniz içine veya saha dışına kurulum yapmak <strong>1 Can</strong> götürür.</li>
+      </ul>
+      <button id="btn-start-game" class="primary-btn large">Ölçüme Başla 🚀</button>
+    </div>
+  </div>
+
+  <!-- OYUN SONU MODALI -->
+  <div id="gameover-modal" class="modal-backdrop hidden">
+    <div class="modal-content">
+      <div id="gameover-badge" class="modal-badge">GÖREV TAMAMLANDI</div>
+      <h2 id="gameover-title">Harika Ölçüm Mühendis!</h2>
+      <div class="final-stats-grid">
+        <div class="f-stat">
+          <span>Toplam Skor</span>
+          <strong id="final-score" class="mono">0</strong>
+        </div>
+        <div class="f-stat">
+          <span>En Yüksek Skor</span>
+          <strong id="final-highscore" class="mono">0</strong>
+        </div>
+        <div class="f-stat">
+          <span>Okunan Hedef</span>
+          <strong id="final-targets" class="mono">0 / 12</strong>
+        </div>
+        <div class="f-stat">
+          <span>Kalan Süre Bonusu</span>
+          <strong id="final-time-bonus" class="mono">+0</strong>
+        </div>
+      </div>
+      <button id="btn-restart-game" class="primary-btn large">Tekrar Oyna ↻</button>
+    </div>
+  </div>
+
+  <!-- Kütüphaneler: Leaflet, Turf.js, Chart.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Oyun Modülleri -->
+  <script src="js/data.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
