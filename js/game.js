@@ -1,185 +1,196 @@
 /**
  * js/game.js
- * Game state and scoring engine encapsulated using JavaScript Closures
+ * Core game state, scoring engine, stage progression, pause/resume timer
  */
 
 function createGameEngine(stages) {
-  // Private state variables protected by closure scope
-  let currentStageIndex = 0;
-  let score = 0;
-  let highScore = Number(localStorage.getItem("toporush_highscore")) || 0;
-  let timeLeft = 90;
-  let lives = 3;
-  let stationDeployCount = 0;
-  let totalTargetsRead = 0;
-  let isGameActive = false;
-  let timerInterval = null;
+  const STORAGE_KEY = "toporush_highscore_v2";
 
-  let readTargetsInStage = new Set();
+  const state = {
+    currentStageIndex: 0,
+    score: 0,
+    highScore: Number(localStorage.getItem(STORAGE_KEY)) || 0,
+    lives: 3,
+    timeLeft: 90,
+    isGameActive: false,
+    isPaused: false,
+    timerId: null,
+    targetsReadInStage: new Set(),
+    totalTargetsRead: 0,
+    stationsDeployedInStage: 0
+  };
 
-  function updateHighScoreIfNeeded() {
-    if (score > highScore) {
-      highScore = score;
-      localStorage.setItem("toporush_highscore", String(highScore));
+  function saveHighScore() {
+    if (state.score > state.highScore) {
+      state.highScore = state.score;
+      localStorage.setItem(STORAGE_KEY, String(state.highScore));
     }
   }
 
-  function startTimerLoop(onTick, onTimeOut) {
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      if (!isGameActive) return;
-      timeLeft -= 1;
-      if (timeLeft <= 0) {
-        timeLeft = 0;
-        isGameActive = false;
-        clearInterval(timerInterval);
-        timerInterval = null;
-        updateHighScoreIfNeeded();
-        if (onTimeOut) onTimeOut();
+  function stopTimer() {
+    if (state.timerId) {
+      clearInterval(state.timerId);
+      state.timerId = null;
+    }
+  }
+
+  function startTimer(onTick, onTimeOut) {
+    stopTimer();
+    state.timerId = setInterval(() => {
+      if (!state.isGameActive || state.isPaused) return;
+      state.timeLeft -= 1;
+      if (state.timeLeft <= 0) {
+        state.timeLeft = 0;
+        state.isGameActive = false;
+        stopTimer();
+        onTick(getPublicState());
+        onTimeOut();
+      } else {
+        onTick(getPublicState());
       }
-      if (onTick) onTick({
-        stageNumber: currentStageIndex + 1,
-        totalStages: stages.length,
-        score,
-        highScore,
-        timeLeft,
-        lives,
-        stationDeployCount,
-        totalTargetsRead,
-        isGameActive,
-        readTargetsCount: readTargetsInStage.size
-      });
     }, 1000);
   }
 
-  return {
-    startNewGame(onTick, onTimeOut) {
-      currentStageIndex = 0;
-      score = 0;
-      timeLeft = 90;
-      lives = 3;
-      stationDeployCount = 0;
-      totalTargetsRead = 0;
-      readTargetsInStage.clear();
-      isGameActive = true;
-      startTimerLoop(onTick, onTimeOut);
-    },
+  function pauseTimer() {
+    state.isPaused = true;
+  }
 
-    // Retry from the exact stage where the player ran out of lives/time
-    retryCurrentStage(onTick, onTimeOut) {
-      timeLeft = 65;
-      lives = 3;
-      stationDeployCount = 0;
-      // Subtract uncompleted stage points if any were gained in the failed attempt
-      totalTargetsRead = Math.max(0, totalTargetsRead - readTargetsInStage.size);
-      score = Math.max(0, score - readTargetsInStage.size * 200);
-      readTargetsInStage.clear();
-      isGameActive = true;
-      startTimerLoop(onTick, onTimeOut);
-    },
+  function resumeTimer() {
+    state.isPaused = false;
+  }
 
-    stopGame() {
-      isGameActive = false;
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      updateHighScoreIfNeeded();
-    },
+  function startNewGame(onTick, onTimeOut) {
+    state.currentStageIndex = 0;
+    state.score = 0;
+    state.lives = 3;
+    state.timeLeft = 90;
+    state.isGameActive = true;
+    state.isPaused = false;
+    state.targetsReadInStage = new Set();
+    state.totalTargetsRead = 0;
+    state.stationsDeployedInStage = 0;
+    startTimer(onTick, onTimeOut);
+  }
 
-    pauseTimer() {
-      isGameActive = false;
-    },
+  function retryCurrentStage(onTick, onTimeOut) {
+    state.lives = 3;
+    state.timeLeft = 60;
+    state.isGameActive = true;
+    state.isPaused = false;
+    state.targetsReadInStage = new Set();
+    state.stationsDeployedInStage = 0;
+    startTimer(onTick, onTimeOut);
+  }
 
-    resumeTimer() {
-      isGameActive = true;
-    },
-
-    getCurrentStage() {
-      return stages[currentStageIndex];
-    },
-
-    registerStationDeployment() {
-      if (!isGameActive) return { allowed: false };
-      stationDeployCount += 1;
-      // First setup in a region is free; each extra move costs 3 seconds
-      if (stationDeployCount > 1) {
-        timeLeft = Math.max(0, timeLeft - 3);
-      }
-      return {
-        allowed: true,
-        timePenalty: stationDeployCount > 1 ? 3 : 0,
-        deployCount: stationDeployCount
-      };
-    },
-
-    penalizeInvalidPlacement() {
-      if (!isGameActive) return lives;
-      lives = Math.max(0, lives - 1);
-      if (lives === 0) {
-        this.stopGame();
-      }
-      return lives;
-    },
-
-    recordVisibleTargets(visibleTargetIds) {
-      let newlyReadCount = 0;
-      visibleTargetIds.forEach(id => {
-        if (!readTargetsInStage.has(id)) {
-          readTargetsInStage.add(id);
-          newlyReadCount += 1;
-          totalTargetsRead += 1;
-          score += 200;
-        }
-      });
-
-      const stage = stages[currentStageIndex];
-      const stageCompleted = readTargetsInStage.size === stage.targets.length;
-
-      let singleStationBonus = 0;
-      if (stageCompleted && stationDeployCount === 1) {
-        singleStationBonus = 300;
-        score += singleStationBonus;
-      }
-
-      updateHighScoreIfNeeded();
-
-      return {
-        newlyReadCount,
-        stageCompleted,
-        singleStationBonus,
-        readSet: new Set(readTargetsInStage)
-      };
-    },
-
-    advanceToNextStage() {
-      if (currentStageIndex + 1 >= stages.length) {
-        const timeBonus = timeLeft * 10;
-        score += timeBonus;
-        this.stopGame();
-        return { gameFinished: true, timeBonus };
-      }
-
-      currentStageIndex += 1;
-      stationDeployCount = 0;
-      readTargetsInStage.clear();
-      timeLeft += 20;
-      return { gameFinished: false, timeBonus: 0 };
-    },
-
-    getState() {
-      return {
-        stageNumber: currentStageIndex + 1,
-        totalStages: stages.length,
-        score,
-        highScore,
-        timeLeft,
-        lives,
-        stationDeployCount,
-        totalTargetsRead,
-        isGameActive,
-        readTargetsCount: readTargetsInStage.size
-      };
+  function registerStationDeployment() {
+    state.stationsDeployedInStage += 1;
+    let timePenalty = 0;
+    if (state.stationsDeployedInStage > 1) {
+      timePenalty = 3;
+      state.timeLeft = Math.max(1, state.timeLeft - timePenalty);
     }
+    return {
+      deployCount: state.stationsDeployedInStage,
+      timePenalty
+    };
+  }
+
+  function penalizeInvalidPlacement() {
+    state.lives = Math.max(0, state.lives - 1);
+    if (state.lives === 0) {
+      state.isGameActive = false;
+      stopTimer();
+    }
+    return state.lives;
+  }
+
+  function addBonusScore(points) {
+    state.score += points;
+    saveHighScore();
+    return state.score;
+  }
+
+  function recordVisibleTargets(visibleTargetIds) {
+    let newlyReadCount = 0;
+    visibleTargetIds.forEach(id => {
+      if (!state.targetsReadInStage.has(id)) {
+        state.targetsReadInStage.add(id);
+        state.totalTargetsRead += 1;
+        newlyReadCount += 1;
+      }
+    });
+
+    const stage = stages[state.currentStageIndex];
+    const stageCompleted = state.targetsReadInStage.size === stage.targets.length;
+
+    let pointsEarned = newlyReadCount * 150;
+    let singleStationBonus = 0;
+
+    if (stageCompleted && state.stationsDeployedInStage === 1) {
+      singleStationBonus = 300;
+      pointsEarned += singleStationBonus;
+    }
+
+    state.score += pointsEarned;
+    saveHighScore();
+
+    return {
+      newlyReadCount,
+      pointsEarned,
+      singleStationBonus,
+      stageCompleted,
+      readSet: new Set(state.targetsReadInStage)
+    };
+  }
+
+  function advanceToNextStage() {
+    if (state.currentStageIndex + 1 < stages.length) {
+      state.currentStageIndex += 1;
+      state.targetsReadInStage = new Set();
+      state.stationsDeployedInStage = 0;
+      state.timeLeft += 20;
+      return { gameFinished: false };
+    } else {
+      state.isGameActive = false;
+      stopTimer();
+      const timeBonus = state.timeLeft * 10;
+      state.score += timeBonus;
+      saveHighScore();
+      return { gameFinished: true, timeBonus };
+    }
+  }
+
+  function getPublicState() {
+    return {
+      stageIndex: state.currentStageIndex,
+      stageNumber: state.currentStageIndex + 1,
+      totalStages: stages.length,
+      score: state.score,
+      highScore: state.highScore,
+      lives: state.lives,
+      timeLeft: state.timeLeft,
+      isGameActive: state.isGameActive,
+      totalTargetsRead: state.totalTargetsRead,
+      stationsDeployedInStage: state.stationsDeployedInStage
+    };
+  }
+
+  function getCurrentStage() {
+    return stages[state.currentStageIndex];
+  }
+
+  return {
+    startNewGame,
+    retryCurrentStage,
+    pauseTimer,
+    resumeTimer,
+    registerStationDeployment,
+    penalizeInvalidPlacement,
+    addBonusScore,
+    recordVisibleTargets,
+    advanceToNextStage,
+    getState: getPublicState,
+    getCurrentStage,
+    stopTimer
   };
 }

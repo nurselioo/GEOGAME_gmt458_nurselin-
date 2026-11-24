@@ -182,7 +182,7 @@
   <div id="briefing-modal" class="modal-backdrop hidden">
     <div class="modal-content briefing-card">
       <div class="region-photo-frame">
-        <img id="briefing-photo" referrerpolicy="no-referrer" src="" alt="Region Landscape" />
+        <img id="briefing-photo" src="" alt="Region Landscape" />
         <div id="briefing-badge" class="photo-badge">STAGE 1 / 6 • EASY</div>
       </div>
 
@@ -201,54 +201,57 @@
     </div>
   </div>
 
-  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (LASER + 3D DEM SURFACE) -->
+  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (LASER + 3D DEM + QUICK QUIZ) -->
   <div id="stage-complete-modal" class="modal-backdrop hidden">
     <div class="modal-content cinematic-card">
       <div class="modal-badge">✅ 3D ELEVATION MODEL & LASER SURVEY COMPLETE</div>
       <h2 id="cinematic-title">Region 1 Mapped Successfully!</h2>
       <p class="modal-desc" id="cinematic-subtitle">
-        Left: Laser beams locked onto the 3 reflector prisms. Right: Generated 3D terrain elevation surface:
+        Left: Laser beams locked onto the 3 reflector prisms. Right: Generated 3D Digital Elevation Model (DEM):
       </p>
 
       <div class="cinematic-stage-box">
-        <canvas id="surveyCinematicCanvas" width="500" height="230"></canvas>
+        <canvas id="surveyCinematicCanvas" width="540" height="250"></canvas>
       </div>
 
       <div id="cinematic-summary" class="cinematic-summary-bar">
         <!-- Filled dynamically with measured heights & bonus -->
       </div>
 
-      <button id="btn-continue-next" class="primary-btn large">Continue to Next Region (+20s) ➔</button>
+      <!-- Quick Field Check Question (Optional Bonus - Never blocks stage progression) -->
+      <div class="stage-quiz-box">
+        <div class="quiz-header-row">
+          <span class="quiz-tag">🧠 QUICK SURVEY CHECK (+100 PTS BONUS)</span>
+        </div>
+        <p id="stage-quiz-question" class="quiz-question-text">Question loading...</p>
+        <div id="stage-quiz-options" class="quiz-options-grid">
+          <!-- Filled dynamically -->
+        </div>
+        <div id="stage-quiz-feedback" class="quiz-feedback hidden"></div>
+      </div>
+
+      <button id="btn-continue-next" class="primary-btn large" disabled>Answer Above to Continue (+20s) ➔</button>
     </div>
   </div>
 
   <!-- GAME OVER / VICTORY MODAL WITH HARD-HAT ENGINEER ANIMATION -->
   <div id="gameover-modal" class="modal-backdrop hidden">
     <div class="modal-content victory-modal-box">
-      <!-- Enlarged Animated Hard-Hat Surveyor Character (Shown on Victory) -->
       <div id="victory-engineer-stage" class="engineer-hero-box hidden">
         <svg class="surveyor-character-svg" viewBox="0 0 180 155" width="220" height="190" aria-label="Master Surveyor with Hard Hat">
           <circle cx="90" cy="82" r="66" fill="rgba(236, 72, 153, 0.16)" stroke="rgba(244, 114, 182, 0.45)" stroke-dasharray="5 5" stroke-width="1.8"/>
-          <!-- High-Visibility Safety Vest / Torso -->
           <path d="M46 150 C46 114, 134 114, 134 150 Z" fill="#ec4899" stroke="#fdf2f8" stroke-width="2"/>
-          <!-- Neon Reflective Vest Stripes -->
           <rect x="62" y="122" width="10" height="28" rx="2" fill="#fde047"/>
           <rect x="108" y="122" width="10" height="28" rx="2" fill="#fde047"/>
           <rect x="54" y="136" width="72" height="7" rx="2" fill="#fde047"/>
-          <!-- Neck -->
           <rect x="80" y="102" width="20" height="18" rx="6" fill="#fed7aa"/>
-          <!-- Friendly Face -->
           <circle cx="90" cy="82" r="27" fill="#fed7aa" stroke="#fdba74" stroke-width="1.5"/>
-          <!-- Eyes -->
           <circle cx="80" cy="80" r="3.2" fill="#1e1b4b"/>
           <circle cx="100" cy="80" r="3.2" fill="#1e1b4b"/>
-          <!-- Rosy Cheeks -->
           <circle cx="73" cy="86" r="3.8" fill="#fb7185" opacity="0.58"/>
           <circle cx="107" cy="86" r="3.8" fill="#fb7185" opacity="0.58"/>
-          <!-- Happy Smile -->
           <path d="M80 91 Q90 101 100 91" fill="none" stroke="#1e1b4b" stroke-width="2.6" stroke-linecap="round"/>
 
-          <!-- Animated Dropping Safety Hard Hat -->
           <g class="hard-hat-drop">
             <path d="M56 63 C56 32, 124 32, 124 63 Z" fill="#facc15" stroke="#fef08a" stroke-width="2"/>
             <path d="M85 35 L95 35 L93 62 L87 62 Z" fill="#eab308"/>
@@ -256,7 +259,6 @@
             <circle cx="90" cy="49" r="5.5" fill="#ec4899" stroke="#ffffff" stroke-width="1.3"/>
           </g>
 
-          <!-- Sparkles -->
           <text x="18" y="45" font-size="18">✨</text>
           <text x="142" y="43" font-size="18">🎉</text>
           <text x="144" y="110" font-size="16">📐</text>

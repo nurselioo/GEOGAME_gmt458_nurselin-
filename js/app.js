@@ -1,8 +1,8 @@
 /**
  * js/app.js
- * Leaflet map, Stage Briefing with reliable Region Photos, Web Audio SFX,
- * Dual Cinematic Animation (Laser Prisms + Rotating 3D Elevation Mesh),
- * and English Hard-Hat Engineer Victory Screen
+ * Leaflet map, Stage Briefing with guaranteed Region Photos (Wikipedia API + CDN),
+ * Web Audio SFX, Professional 3D DEM Wireframe & Contour Surface,
+ * Stage-End Quick Quiz, and English Hard-Hat Engineer Victory Screen
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -229,39 +229,51 @@ document.addEventListener("DOMContentLoaded", () => {
     hudHighscore.textContent = state.highScore;
   }
 
-  const FALLBACK_LANDSCAPE_SVG =
-    "data:image/svg+xml;utf8," +
-    encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300">
-        <defs>
-          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3b1d54"/>
-            <stop offset="100%" stop-color="#ec4899"/>
-          </linearGradient>
-        </defs>
-        <rect width="800" height="300" fill="url(#sky)"/>
-        <polygon points="0,300 180,110 380,300" fill="#281733"/>
-        <polygon points="240,300 480,85 740,300" fill="#1b1022"/>
-        <polygon points="520,300 690,140 800,240 800,300" fill="#321942"/>
-      </svg>`
-    );
+  // Fetch verified region thumbnail via Wikipedia CORS API if needed
+  const wikiPhotoCache = {};
+  async function resolveRegionPhoto(stage) {
+    if (wikiPhotoCache[stage.id]) return wikiPhotoCache[stage.id];
+    if (stage.wikiTitle) {
+      try {
+        const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(
+          stage.wikiTitle
+        )}&prop=pageimages&format=json&pithumbsize=900&origin=*`;
+        const resp = await fetch(apiUrl);
+        if (resp.ok) {
+          const data = await resp.json();
+          const pages = data?.query?.pages || {};
+          const firstPage = Object.values(pages)[0];
+          if (firstPage?.thumbnail?.source) {
+            wikiPhotoCache[stage.id] = firstPage.thumbnail.source;
+            return firstPage.thumbnail.source;
+          }
+        }
+      } catch (e) {
+        // Fallback to stage.photo
+      }
+    }
+    return stage.photo;
+  }
 
-  function openStageBriefing(stage) {
+  async function openStageBriefing(stage) {
     game.pauseTimer();
 
     const state = game.getState();
     const photoEl = document.getElementById("briefing-photo");
-    let triedBackup = false;
+    photoEl.removeAttribute("referrerpolicy");
 
-    photoEl.onerror = () => {
-      if (!triedBackup && stage.backupPhoto) {
-        triedBackup = true;
-        photoEl.src = stage.backupPhoto;
-      } else {
-        photoEl.src = FALLBACK_LANDSCAPE_SVG;
-      }
-    };
+    // Load verified Wikipedia API photo first, with Unsplash CDN fallback
     photoEl.src = stage.photo;
+    photoEl.onerror = () => {
+      photoEl.onerror = null;
+      photoEl.src = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80";
+    };
+
+    resolveRegionPhoto(stage).then((resolvedUrl) => {
+      if (resolvedUrl && photoEl.src !== resolvedUrl) {
+        photoEl.src = resolvedUrl;
+      }
+    });
 
     document.getElementById("briefing-badge").textContent = `STAGE ${state.stageNumber} / ${state.totalStages} • ${stage.difficulty.toUpperCase()}`;
     document.getElementById("briefing-title").textContent = stage.name;
@@ -618,15 +630,17 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // =========================================================================
-  // DUAL CINEMATIC VISUALIZATION:
-  // LEFT: Total Station -> 3 Reflector Prisms | RIGHT: Rotating 3D DEM Mesh
+  // DUAL CINEMATIC VISUALIZATION + QUICK STAGE QUIZ:
+  // LEFT: Total Station -> 3 Reflector Prisms | RIGHT: High-Res 3D DEM Surface
   // =========================================================================
+  const btnContinueNext = document.getElementById("btn-continue-next");
+
   function openCinematicSurveyModal(stage, singleBonus) {
     game.pauseTimer();
 
-    document.getElementById("cinematic-title").textContent = `${stage.name} — 3D Model Ready!`;
+    document.getElementById("cinematic-title").textContent = `${stage.name} — 3D DEM Generated!`;
     document.getElementById("cinematic-subtitle").textContent =
-      `Left: Laser beams locked onto the 3 reflector prisms. Right: Generated 3D terrain elevation surface:`;
+      `Left: Laser beams locked onto the 3 reflector prisms. Right: Hypsometric 3D Digital Elevation Model (DEM):`;
 
     const summaryEl = document.getElementById("cinematic-summary");
     summaryEl.innerHTML =
@@ -635,8 +649,80 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("") +
       (singleBonus ? `<span style="color:#34d399;font-weight:700;">🏆 +${singleBonus} Bonus</span>` : "");
 
+    // Setup Quick Stage Quiz (Never blocks progress even if answered wrong)
+    setupStageQuiz(stage);
+
     stageCompleteModal.classList.remove("hidden");
     startSurveyCanvasAnimation(stage);
+  }
+
+  function setupStageQuiz(stage) {
+    const qObj = stage.quiz;
+    const questionEl = document.getElementById("stage-quiz-question");
+    const optionsEl = document.getElementById("stage-quiz-options");
+    const feedbackEl = document.getElementById("stage-quiz-feedback");
+
+    questionEl.textContent = qObj.question;
+    optionsEl.innerHTML = "";
+    feedbackEl.classList.add("hidden");
+    feedbackEl.className = "quiz-feedback hidden";
+
+    btnContinueNext.disabled = true;
+    btnContinueNext.textContent = "Select an Answer Above to Continue ➔";
+
+    qObj.options.forEach((optText, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "quiz-option-btn";
+      btn.textContent = `${String.fromCharCode(65 + idx)}. ${optText}`;
+
+      btn.addEventListener("click", () => {
+        // Lock all option buttons after answer
+        const allBtns = optionsEl.querySelectorAll("button");
+        allBtns.forEach((b, bIdx) => {
+          b.disabled = true;
+          if (bIdx === qObj.correctIndex) b.classList.add("correct-ans");
+        });
+
+        if (idx === qObj.correctIndex) {
+          playTargetSuccessSound();
+          game.addBonusScore(100);
+          updateHUD(game.getState());
+          feedbackEl.innerHTML = `✅ <strong>Correct (+100 pts)!</strong> ${qObj.explanation}`;
+          feedbackEl.className = "quiz-feedback ok";
+        } else {
+          btn.classList.add("wrong-ans");
+          playTone(300, 0.14, "sine", 0, 0.08);
+          feedbackEl.innerHTML = `💡 <strong>Good to know:</strong> ${qObj.explanation}`;
+          feedbackEl.className = "quiz-feedback info";
+        }
+
+        feedbackEl.classList.remove("hidden");
+        btnContinueNext.disabled = false;
+        btnContinueNext.textContent = "Continue to Next Region (+20s) ➔";
+      });
+
+      optionsEl.appendChild(btn);
+    });
+  }
+
+  // Hypsometric color helper for professional 3D DEM surface
+  function getHypsometricColor(normZ, alpha = 0.85) {
+    // normZ from 0 (valley) -> 0.5 (mid plateau) -> 1.0 (high ridge)
+    const t = Math.max(0, Math.min(1, normZ));
+    let r, g, b;
+    if (t < 0.5) {
+      const k = t * 2;
+      r = Math.round(56 + (16 - 56) * k);
+      g = Math.round(189 + (185 - 189) * k);
+      b = Math.round(248 + (129 - 248) * k);
+    } else {
+      const k = (t - 0.5) * 2;
+      r = Math.round(16 + (244 - 16) * k);
+      g = Math.round(185 + (114 - 185) * k);
+      b = Math.round(129 + (182 - 129) * k);
+    }
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
   function startSurveyCanvasAnimation(stage) {
@@ -648,40 +734,46 @@ document.addEventListener("DOMContentLoaded", () => {
     let frame = 0;
 
     const reflectors = [
-      { id: "M1", icon: stage.targets[0].icon, elev: targetElevations["M1"] || 1210, x: 205, y: 52 },
-      { id: "M2", icon: stage.targets[1].icon, elev: targetElevations["M2"] || 1195, x: 232, y: 118 },
-      { id: "M3", icon: stage.targets[2].icon, elev: targetElevations["M3"] || 1205, x: 198, y: 175 }
+      { id: "M1", icon: stage.targets[0].icon, elev: targetElevations["M1"] || 1210, x: 205, y: 56 },
+      { id: "M2", icon: stage.targets[1].icon, elev: targetElevations["M2"] || 1195, x: 235, y: 126 },
+      { id: "M3", icon: stage.targets[2].icon, elev: targetElevations["M3"] || 1205, x: 198, y: 192 }
     ];
-    const station = { x: 46, y: 120 };
+    const station = { x: 46, y: 130 };
 
     const h0 = lastStationHeight || 1200;
     const h1 = targetElevations["M1"] || 1210;
     const h2 = targetElevations["M2"] || 1190;
     const h3 = targetElevations["M3"] || 1205;
+    const minH = Math.min(h0, h1, h2, h3) - 15;
+    const maxH = Math.max(h0, h1, h2, h3) + 15;
     const avgH = (h0 + h1 + h2 + h3) / 4;
 
     function render() {
       frame += 1;
       ctx.clearRect(0, 0, w, h);
 
-      ctx.strokeStyle = "rgba(236, 72, 153, 0.12)";
+      // Subtle CAD background grid
+      ctx.strokeStyle = "rgba(236, 72, 153, 0.09)";
       ctx.lineWidth = 1;
-      for (let gx = 0; gx < w; gx += 25) {
+      for (let gx = 0; gx < w; gx += 24) {
         ctx.beginPath();
         ctx.moveTo(gx, 0);
         ctx.lineTo(gx, h);
         ctx.stroke();
       }
 
+      // Vertical divider
       ctx.strokeStyle = "rgba(244, 114, 182, 0.35)";
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.moveTo(268, 12);
-      ctx.lineTo(268, h - 12);
+      ctx.moveTo(266, 12);
+      ctx.lineTo(266, h - 12);
       ctx.stroke();
       ctx.setLineDash([]);
 
+      // ---------------------------------------------------------------------
       // LEFT PANEL: Laser -> Reflector Prisms
+      // ---------------------------------------------------------------------
       ctx.fillStyle = "#f472b6";
       ctx.font = "bold 10px JetBrains Mono, monospace";
       ctx.fillText("1. LASER PRISM LOCK", 14, 18);
@@ -781,35 +873,62 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.font = "bold 10px JetBrains Mono, monospace";
       ctx.fillText(`STN ${Math.round(lastStationHeight)}m`, station.x - 28, station.y + 49);
 
-      // RIGHT PANEL: Rotating 3D Elevation Surface Mesh
+      // ---------------------------------------------------------------------
+      // RIGHT PANEL: High-Resolution Hypsometric 3D DEM Surface + Contours
+      // ---------------------------------------------------------------------
       ctx.fillStyle = "#34d399";
       ctx.font = "bold 10px JetBrains Mono, monospace";
-      ctx.fillText("2. 3D ELEVATION MODEL", 282, 18);
+      ctx.fillText("2. 3D DEM SURFACE & CONTOURS", 280, 18);
 
-      const cx = 385;
-      const cy = 136;
-      const angle = frame * 0.022;
+      const cx = 398;
+      const cy = 152;
+      const angle = frame * 0.018;
       const cosA = Math.cos(angle);
       const sinA = Math.sin(angle);
-      const gridN = 8;
-      const scale = 15;
+      const gridN = 14;
+      const scale = 11.5;
+
+      function computeTerrainZ(nx, nz) {
+        const ridgeM1 = ((h1 - avgH) * 0.45 + 22) * Math.exp(-((nx - 0.48) ** 2 + (nz + 0.42) ** 2) * 3.8);
+        const basinM2 = ((h2 - avgH) * 0.45 + 14) * Math.exp(-((nx + 0.46) ** 2 + (nz - 0.35) ** 2) * 3.8);
+        const ridgeM3 = ((h3 - avgH) * 0.45 + 19) * Math.exp(-((nx - 0.32) ** 2 + (nz - 0.48) ** 2) * 4.0);
+        const stnPeak = ((h0 - avgH) * 0.52 + 28) * Math.exp(-(nx ** 2 + nz ** 2) * 2.8);
+        const undulation = Math.sin(nx * 5) * 3.2 + Math.cos(nz * 5) * 2.8;
+        return ridgeM1 + basinM2 + ridgeM3 + stnPeak + undulation;
+      }
 
       function project3D(gx, gz) {
-        const nx = gx / gridN;
-        const nz = gz / gridN;
-        const hill1 = ((h1 - avgH) * 0.35 + 18) * Math.exp(-((nx - 0.5) ** 2 + (nz + 0.4) ** 2) * 3.2);
-        const hill2 = ((h2 - avgH) * 0.35 + 14) * Math.exp(-((nx + 0.5) ** 2 + (nz - 0.3) ** 2) * 3.2);
-        const stnPeak = ((h0 - avgH) * 0.4 + 22) * Math.exp(-(nx ** 2 + nz ** 2) * 2.5);
-        const yElev = hill1 + hill2 + stnPeak + Math.sin(nx * 4) * 4;
+        const nx = gx / (gridN / 2);
+        const nz = gz / (gridN / 2);
+        const yElev = computeTerrainZ(nx, nz);
 
         const rx = gx * cosA - gz * sinA;
         const rz = gx * sinA + gz * cosA;
 
         const sx = cx + rx * scale;
-        const sy = cy + rz * (scale * 0.52) - yElev;
-        return { sx, sy, yElev };
+        const sy = cy + rz * (scale * 0.5) - yElev;
+        return { sx, sy, yElev, rz };
       }
 
+      // 3D Base Pedestal Frame
+      const baseCorners = [
+        project3D(-gridN / 2, -gridN / 2),
+        project3D(gridN / 2, -gridN / 2),
+        project3D(gridN / 2, gridN / 2),
+        project3D(-gridN / 2, gridN / 2)
+      ];
+      ctx.strokeStyle = "rgba(216, 180, 226, 0.25)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      baseCorners.forEach((c, i) => {
+        const baseY = c.sy + c.yElev + 10;
+        if (i === 0) ctx.moveTo(c.sx, baseY);
+        else ctx.lineTo(c.sx, baseY);
+      });
+      ctx.closePath();
+      ctx.stroke();
+
+      // Build mesh points
       const pts = [];
       for (let i = 0; i <= gridN; i++) {
         pts[i] = [];
@@ -820,37 +939,76 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
+      // Collect cells and painter-sort back-to-front by depth (rz)
+      const cells = [];
       for (let i = 0; i < gridN; i++) {
         for (let j = 0; j < gridN; j++) {
           const p1 = pts[i][j];
           const p2 = pts[i + 1][j];
           const p3 = pts[i + 1][j + 1];
           const p4 = pts[i][j + 1];
-
-          const isHigh = p1.yElev > 16;
-          ctx.fillStyle = isHigh ? "rgba(16, 185, 129, 0.22)" : "rgba(236, 72, 153, 0.18)";
-          ctx.strokeStyle = isHigh ? "#34d399" : "#f472b6";
-          ctx.lineWidth = 1;
-
-          ctx.beginPath();
-          ctx.moveTo(p1.sx, p1.sy);
-          ctx.lineTo(p2.sx, p2.sy);
-          ctx.lineTo(p3.sx, p3.sy);
-          ctx.lineTo(p4.sx, p4.sy);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
+          const avgDepth = (p1.rz + p2.rz + p3.rz + p4.rz) / 4;
+          const avgElev = (p1.yElev + p2.yElev + p3.yElev + p4.yElev) / 4;
+          cells.push({ p1, p2, p3, p4, avgDepth, avgElev });
         }
       }
+      cells.sort((a, b) => a.avgDepth - b.avgDepth);
 
+      cells.forEach((cell) => {
+        const normZ = (cell.avgElev + 5) / 48;
+        ctx.fillStyle = getHypsometricColor(normZ, 0.34);
+        ctx.strokeStyle = getHypsometricColor(normZ, 0.85);
+        ctx.lineWidth = 0.85;
+
+        ctx.beginPath();
+        ctx.moveTo(cell.p1.sx, cell.p1.sy);
+        ctx.lineTo(cell.p2.sx, cell.p2.sy);
+        ctx.lineTo(cell.p3.sx, cell.p3.sy);
+        ctx.lineTo(cell.p4.sx, cell.p4.sy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // Vertical Drop-Line & Peak Pin at Total Station Summit
       const peakPt = pts[gridN / 2][gridN / 2];
+      ctx.strokeStyle = "#fde047";
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(peakPt.sx, peakPt.sy);
+      ctx.lineTo(peakPt.sx, peakPt.sy + peakPt.yElev + 8);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
       ctx.fillStyle = "#fde047";
       ctx.beginPath();
-      ctx.arc(peakPt.sx, peakPt.sy, 4, 0, Math.PI * 2);
+      ctx.arc(peakPt.sx, peakPt.sy, 4.2, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = "#130b18";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
       ctx.fillStyle = "#fdf2f8";
       ctx.font = "bold 10px JetBrains Mono, monospace";
-      ctx.fillText(`Z=${Math.round(h0)}m`, peakPt.sx - 18, peakPt.sy - 8);
+      ctx.fillText(`Z=${Math.round(h0)}m`, peakPt.sx - 20, peakPt.sy - 8);
+
+      // Hypsometric Elevation Legend Bar on far right
+      const barX = 516;
+      const barY = 42;
+      const barH = 140;
+      const grad = ctx.createLinearGradient(0, barY, 0, barY + barH);
+      grad.addColorStop(0, "#f472b6");
+      grad.addColorStop(0.5, "#10b981");
+      grad.addColorStop(1, "#38bdf8");
+      ctx.fillStyle = grad;
+      ctx.fillRect(barX, barY, 7, barH);
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.strokeRect(barX, barY, 7, barH);
+
+      ctx.fillStyle = "#d8b4e2";
+      ctx.font = "9px JetBrains Mono, monospace";
+      ctx.fillText(`${Math.round(maxH)}m`, barX - 14, barY - 5);
+      ctx.fillText(`${Math.round(minH)}m`, barX - 14, barY + barH + 11);
 
       cinematicAnimId = requestAnimationFrame(render);
     }
@@ -858,7 +1016,7 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   }
 
-  document.getElementById("btn-continue-next").addEventListener("click", () => {
+  btnContinueNext.addEventListener("click", () => {
     if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
     stageCompleteModal.classList.add("hidden");
     const res = game.advanceToNextStage();

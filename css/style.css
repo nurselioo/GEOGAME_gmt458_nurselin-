@@ -469,9 +469,15 @@ body {
   box-shadow: 0 4px 14px var(--accent-pink-glow);
 }
 
-.primary-btn:hover {
+.primary-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 22px rgba(236, 72, 153, 0.65);
+}
+
+.primary-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .secondary-btn {
@@ -583,18 +589,18 @@ body {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  max-width: 560px;
+  max-width: 580px;
   width: 100%;
-  padding: 24px;
+  padding: 22px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
-  max-height: 92vh;
+  max-height: 94vh;
   overflow-y: auto;
 }
 
 .region-photo-frame {
   position: relative;
   width: 100%;
-  height: 195px;
+  height: 205px;
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 14px;
@@ -631,19 +637,19 @@ body {
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 6px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .modal-content h2 {
-  font-size: 1.38rem;
-  margin-bottom: 8px;
+  font-size: 1.34rem;
+  margin-bottom: 6px;
 }
 
 .modal-desc {
   color: var(--text-muted);
-  font-size: 0.88rem;
-  line-height: 1.48;
-  margin-bottom: 12px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  margin-bottom: 10px;
 }
 
 .rules-list {
@@ -681,14 +687,14 @@ body {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--accent-pink);
-  background: #120919;
-  margin-bottom: 12px;
+  background: #0f0715;
+  margin-bottom: 10px;
   box-shadow: 0 0 24px rgba(236, 72, 153, 0.28);
 }
 
 #surveyCinematicCanvas {
   width: 100%;
-  height: 230px;
+  height: 250px;
   display: block;
 }
 
@@ -699,9 +705,96 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 12px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
   font-size: 0.8rem;
+}
+
+/* --- STAGE QUIZ BOX --- */
+.stage-quiz-box {
+  background: var(--bg-card);
+  border: 1px solid rgba(244, 114, 182, 0.45);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 6px;
+}
+
+.quiz-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.quiz-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-amber);
+  letter-spacing: 0.4px;
+}
+
+.quiz-question-text {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 9px;
+  line-height: 1.4;
+}
+
+.quiz-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quiz-option-btn {
+  background: rgba(19, 11, 24, 0.75);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.quiz-option-btn:hover:not(:disabled) {
+  border-color: var(--accent-pink);
+  background: rgba(236, 72, 153, 0.18);
+}
+
+.quiz-option-btn.correct-ans {
+  border-color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.22);
+  color: #a7f3d0;
+  font-weight: 600;
+}
+
+.quiz-option-btn.wrong-ans {
+  border-color: var(--accent-red);
+  background: rgba(244, 63, 94, 0.2);
+  color: #fecdd3;
+}
+
+.quiz-feedback {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.quiz-feedback.ok {
+  background: rgba(16, 185, 129, 0.16);
+  border-left: 3px solid var(--accent-green);
+  color: #a7f3d0;
+}
+
+.quiz-feedback.info {
+  background: rgba(251, 191, 36, 0.15);
+  border-left: 3px solid var(--accent-amber);
+  color: #fde68a;
 }
 
 /* --- VICTORY HARD-HAT ENGINEER ANIMATION & MESSAGE --- */
