@@ -1,7 +1,7 @@
 /**
  * js/app.js
- * Leaflet map, custom SVG Total Station icon, terrain target markers,
- * Hot/Cold Surveyor Coach, simplified Chart.js profile, and Event Handlers
+ * Leaflet map, Stage Briefing modal, custom SVG Total Station icon,
+ * large terrain target markers, Hot/Cold Surveyor Coach, and Event Handlers
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const cursorElevBadge = document.getElementById("cursor-elev-badge");
   const stationElevEl = document.getElementById("station-elev");
   const stationCountEl = document.getElementById("station-count");
-  const stationRangeEl = document.getElementById("station-range");
   const stationFeedbackBox = document.getElementById("station-feedback-box");
 
   const targetListEl = document.getElementById("target-list");
@@ -30,12 +29,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnNextStage = document.getElementById("btn-next-stage");
 
   const startModal = document.getElementById("start-modal");
+  const briefingModal = document.getElementById("briefing-modal");
   const gameoverModal = document.getElementById("gameover-modal");
+  const btnRetryStage = document.getElementById("btn-retry-stage");
 
-  // Professional SVG Total Station Marker HTML
+  // Clean SVG Total Station Marker (no persistent white text box)
   const TOTAL_STATION_MARKER_HTML = `
-    <div class="station-marker-svg-wrap" style="width:40px;height:40px;">
-      <svg viewBox="0 0 64 64" width="28" height="28" aria-label="Total Station">
+    <div class="station-marker-svg-wrap" style="width:42px;height:42px;">
+      <svg viewBox="0 0 64 64" width="30" height="30" aria-label="Total Station">
         <line x1="32" y1="34" x2="14" y2="60" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
         <line x1="32" y1="34" x2="50" y2="60" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
         <line x1="32" y1="34" x2="32" y2="62" stroke="#fbcfe8" stroke-width="4" stroke-linecap="round"/>
@@ -70,7 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let elevationChart = null;
   let isProcessingClick = false;
 
-  // Simplified Side-View Chart.js Setup
   function initChart() {
     const ctx = document.getElementById("elevationChart").getContext("2d");
     elevationChart = new Chart(ctx, {
@@ -153,6 +153,36 @@ document.addEventListener("DOMContentLoaded", () => {
     hudHighscore.textContent = state.highScore;
   }
 
+  // Show Stage Briefing Guide Modal before starting each region
+  function openStageBriefing(stage) {
+    game.pauseTimer(); // Pause clock while player reads the stage guide
+
+    const state = game.getState();
+    document.getElementById("briefing-badge").textContent = `STAGE ${state.stageNumber} / ${state.totalStages} • ${stage.difficulty.toUpperCase()}`;
+    document.getElementById("briefing-title").textContent = stage.name;
+    document.getElementById("briefing-desc").textContent = stage.briefingIntro;
+    document.getElementById("briefing-strategy").textContent = stage.strategyTip;
+
+    const listEl = document.getElementById("briefing-targets-list");
+    listEl.innerHTML = "";
+    stage.targets.forEach((t) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span style="font-size:1.25rem;">${t.icon}</span> <strong>${t.id} – ${t.name} (${t.type}):</strong> ${t.desc}`;
+      listEl.appendChild(li);
+    });
+
+    briefingModal.classList.remove("hidden");
+  }
+
+  document.getElementById("btn-close-briefing").addEventListener("click", () => {
+    briefingModal.classList.add("hidden");
+    game.resumeTimer();
+  });
+
+  document.getElementById("btn-show-briefing").addEventListener("click", () => {
+    openStageBriefing(game.getCurrentStage());
+  });
+
   // Live cursor height preview while moving mouse over map
   map.on("mousemove", (e) => {
     if (!game.getState().isGameActive) return;
@@ -160,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
     cursorElevBadge.textContent = `Cursor: ~${Math.round(estHeight)} m`;
   });
 
-  async function loadStage(stage) {
+  async function loadStage(stage, showBriefingPopup = true) {
     targetMarkersLayer.clearLayers();
     stationLayer.clearLayers();
     sightLinesLayer.clearLayers();
@@ -171,22 +201,22 @@ document.addEventListener("DOMContentLoaded", () => {
     regionTitle.textContent = `${stage.name} (${stage.difficulty})`;
     stationElevEl.textContent = "-- m";
     stationCountEl.textContent = "0";
-    stationRangeEl.textContent = `${stage.maxRange} m`;
-    targetsProgressEl.textContent = `0 / ${stage.targets.length} Done`;
+    targetsProgressEl.textContent = `0 / ${stage.targets.length}`;
     profileSelector.disabled = true;
     btnNextStage.classList.add("hidden");
     losStatusText.textContent = "Dashed line = Laser beam. If pink ground rises above it, a hill blocks your view.";
     losStatusText.style.color = "#d8b4e2";
-    setFeedback(`💡 <strong>How to Start:</strong> ${stage.hint}`, "info");
+    setFeedback(`💡 <strong>Strategy:</strong> ${stage.hint}`, "info");
 
+    // Clean Pink Dashed Study Area Box (No confusing extra circle)
     const rectBounds = [
       [stage.bounds.minLat, stage.bounds.minLng],
       [stage.bounds.maxLat, stage.bounds.maxLng]
     ];
     L.rectangle(rectBounds, {
       color: "#f472b6",
-      weight: 1.5,
-      dashArray: "6, 6",
+      weight: 2,
+      dashArray: "7, 7",
       fillOpacity: 0.04
     }).addTo(boundaryLayer);
 
@@ -195,13 +225,17 @@ document.addEventListener("DOMContentLoaded", () => {
         radius: stage.waterZone.radius,
         color: "#f43f5e",
         fillColor: "#ec4899",
-        fillOpacity: 0.22,
+        fillOpacity: 0.24,
         weight: 1.5
-      }).bindTooltip("💧 Crater Lake: Do Not Place Station Here").addTo(boundaryLayer);
+      }).bindTooltip("💧 Crater Lake: Do Not Click Inside").addTo(boundaryLayer);
     }
 
-    map.flyTo(stage.center, stage.zoom, { duration: 1.1 });
+    map.flyTo(stage.center, stage.zoom, { duration: 1.0 });
     showBanner(`💡 <strong>Tip:</strong> ${stage.hint}`);
+
+    if (showBriefingPopup) {
+      openStageBriefing(stage);
+    }
 
     const elevations = await fetchElevationProfile(stage.targets);
     stage.targets.forEach((t, idx) => {
@@ -214,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderTargetMarkersAndList(stage, readSet, statusMap) {
     targetMarkersLayer.clearLayers();
     targetListEl.innerHTML = "";
-    targetsProgressEl.textContent = `${readSet.size} / ${stage.targets.length} Done`;
+    targetsProgressEl.textContent = `${readSet.size} / ${stage.targets.length}`;
 
     stage.targets.forEach((t, index) => {
       const isRead = readSet.has(t.id);
@@ -226,9 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const icon = L.divIcon({
         className: "",
-        html: `<div class="${pillClass}">${t.icon} ${t.id}</div>`,
-        iconSize: [52, 26],
-        iconAnchor: [26, 13]
+        html: `<div class="${pillClass}"><span class="t-ico">${t.icon}</span><span>${t.id}</span></div>`,
+        iconSize: [64, 30],
+        iconAnchor: [32, 15]
       });
 
       const marker = L.marker([t.lat, t.lng], { icon }).addTo(targetMarkersLayer);
@@ -249,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       li.innerHTML = `
-        <div><span>${t.icon}</span> <strong>${t.id}</strong> • ${t.name}</div>
+        <div><span class="target-emoji-lg">${t.icon}</span> <strong>${t.id}</strong> • ${t.name}</div>
         <div>${statusBadge}</div>
       `;
 
@@ -264,7 +298,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Helper: Direction hint from station to blocked target
   function getCardinalDirection(fromLat, fromLng, toLat, toLng) {
     const dLat = toLat - fromLat;
     const dLng = toLng - fromLng;
@@ -293,8 +326,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!inBounds) {
       const remLives = game.penalizeInvalidPlacement();
       updateHUD(game.getState());
-      setFeedback("❄️ <strong>FREEZING (Outside Area):</strong> You clicked outside the pink dashed box! Click closer to the M1–M3 targets.", "bad");
-      showBanner("⚠️ Stay inside the pink study box! <strong>-1 Life</strong>", "error");
+      setFeedback("❄️ <strong>FREEZING (Outside Box):</strong> Click inside the pink dashed rectangle near M1–M3!", "bad");
+      showBanner("⚠️ Stay inside the pink dashed box! <strong>-1 Life</strong>", "error");
       if (remLives === 0) triggerGameOver(false);
       return;
     }
@@ -309,7 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (distToLake <= stage.waterZone.radius) {
         const remLives = game.penalizeInvalidPlacement();
         updateHUD(game.getState());
-        setFeedback("❄️ <strong>COLD (Water Hazard):</strong> Tripods sink in water! In surveying, always pick dry high ground on the crater rim.", "bad");
+        setFeedback("❄️ <strong>COLD (Water Hazard):</strong> You cannot set up on water! Click on the dry ridge on the east side.", "bad");
         showBanner("🌊 Cannot place station in water! <strong>-1 Life</strong>", "error");
         if (remLives === 0) triggerGameOver(false);
         return;
@@ -328,22 +361,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const stationIcon = L.divIcon({
       className: "",
       html: TOTAL_STATION_MARKER_HTML,
-      iconSize: [40, 40],
-      iconAnchor: [20, 20]
+      iconSize: [42, 42],
+      iconAnchor: [21, 21]
     });
 
-    L.marker([lat, lng], { icon: stationIcon })
-      .addTo(stationLayer)
-      .bindTooltip("📡 Your Total Station");
-
-    L.circle([lat, lng], {
-      radius: stage.maxRange,
-      color: "#ec4899",
-      weight: 1.2,
-      dashArray: "4, 6",
-      fillColor: "#ec4899",
-      fillOpacity: 0.06
-    }).addTo(stationLayer);
+    // Clean marker without persistent popup label
+    L.marker([lat, lng], { icon: stationIcon }).addTo(stationLayer);
 
     const SAMPLES = 12;
     const allSamplePoints = [{ lat, lng }];
@@ -360,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const elevations = await fetchElevationProfile(allSamplePoints);
     const groundHeight = elevations[0];
-    const stationElev = groundHeight + 1.6;
+    const stationElev = groundHeight + 2.0; // Tripod + instrument height
 
     stationElevEl.textContent = `${groundHeight.toFixed(1)} m`;
     stationCountEl.textContent = String(deployInfo.deployCount);
@@ -385,7 +408,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const losElevs = terrainElevs.map((_, i) => {
         const frac = i / SAMPLES;
-        return Math.round((stationElev + (targetGroundElev + 1.5 - stationElev) * frac) * 10) / 10;
+        return Math.round((stationElev + (targetGroundElev + 1.8 - stationElev) * frac) * 10) / 10;
       });
 
       let isBlocked = false;
@@ -446,7 +469,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateHUD(game.getState());
     renderTargetMarkersAndList(stage, result.readSet, statusMap);
 
-    // Hot / Cold Surveyor Coaching Message
     buildHotColdCoaching(groundHeight, visibleIds, blockedDetails, farDetails, highestObstacle, result);
 
     profileSelector.disabled = false;
@@ -461,7 +483,7 @@ document.addEventListener("DOMContentLoaded", () => {
       btnNextStage.classList.remove("hidden");
     } else {
       const penaltyTxt = deployInfo.timePenalty ? ` (-${deployInfo.timePenalty}s)` : "";
-      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Follow the Station Coach on the right!`);
+      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Check the Station Coach advice on the right!`);
     }
 
     isProcessingClick = false;
@@ -470,35 +492,33 @@ document.addEventListener("DOMContentLoaded", () => {
   function buildHotColdCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
     if (result.stageCompleted) {
       setFeedback(
-        `🔥 <strong>BULLSEYE! Region Complete (${Math.round(height)} m):</strong> Great surveying! Click the glowing <b>Next Region</b> button on the map.`,
+        `🔥 <strong>BULLSEYE! Region Complete (${Math.round(height)} m):</strong> Great job! Click the glowing <b>Next Region</b> button on the map.`,
         "good"
       );
       return;
     }
 
-    // Determine Hot / Warm / Cold temperature
     let tempBadge = "";
     let level = "warn";
 
     if (visibleIds.length === 2) {
-      tempBadge = "🔥 <strong>VERY HOT (2/3 Visible):</strong> You are very close to a perfect spot!";
+      tempBadge = "🔥 <strong>VERY HOT (2/3 Visible):</strong> Almost there! Just 1 target left.";
       level = "good";
     } else if (visibleIds.length === 1) {
-      tempBadge = "🌤️ <strong>WARM (1/3 Visible):</strong> Good start, but you need a better angle or higher ground.";
+      tempBadge = "🌤️ <strong>WARM (1/3 Visible):</strong> Good start! Move slightly higher to catch the rest.";
       level = "warn";
     } else {
-      tempBadge = "❄️ <strong>COLD (0/3 Visible):</strong> You are standing in a low valley or behind a big hill.";
+      tempBadge = "❄️ <strong>COLD (0/3 Visible):</strong> You are in a low dip behind a hill.";
       level = "bad";
     }
 
-    // Actionable next-click criteria
     let advice = "";
     if (farDetails.length > 0) {
       const f = farDetails[0];
-      advice = `📏 <b>Rule:</b> <b>${f.id}</b> is ${f.dist}m away (too far). Move <b>${f.dir}</b> toward the middle of the targets.`;
+      advice = `📏 <b>Rule:</b> <b>${f.id}</b> is too far (${f.dist}m). Move <b>${f.dir}</b> toward the middle of the targets.`;
     } else if (blockedDetails.length > 0) {
       const b = blockedDetails[0];
-      const recommendedHeight = Math.round(highestObstacle + 15);
+      const recommendedHeight = Math.round(highestObstacle + 10);
       advice = `⛰️ <b>Rule:</b> A <b>${b.ridgeHeight} m</b> hill blocks <b>${b.id}</b>. Move your cursor to find a hill higher than <b>${recommendedHeight} m</b> toward the <b>${b.dir}</b>!`;
     }
 
@@ -568,10 +588,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Start, Restart & Next Stage Buttons
+  // Start, Retry Current Stage, Restart & Next Stage Buttons
   document.getElementById("btn-start-game").addEventListener("click", () => {
     startModal.classList.add("hidden");
     startSession();
+  });
+
+  btnRetryStage.addEventListener("click", () => {
+    gameoverModal.classList.add("hidden");
+    game.retryCurrentStage(
+      (state) => updateHUD(state),
+      () => triggerGameOver(false, 0)
+    );
+    updateHUD(game.getState());
+    loadStage(game.getCurrentStage(), true);
   });
 
   document.getElementById("btn-restart-game").addEventListener("click", () => {
@@ -585,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (res.gameFinished) {
       triggerGameOver(true, res.timeBonus);
     } else {
-      loadStage(game.getCurrentStage());
+      loadStage(game.getCurrentStage(), true);
     }
   });
 
@@ -595,22 +625,29 @@ document.addEventListener("DOMContentLoaded", () => {
       () => triggerGameOver(false, 0)
     );
     updateHUD(game.getState());
-    loadStage(game.getCurrentStage());
+    loadStage(game.getCurrentStage(), true);
   }
 
   function triggerGameOver(isVictory, timeBonus = 0) {
     const finalState = game.getState();
     document.getElementById("gameover-badge").textContent = isVictory
-      ? "ALL REGIONS COMPLETE"
-      : "TIME OR LIVES RAN OUT";
+      ? "ALL 6 REGIONS COMPLETE"
+      : `STOPPED AT STAGE ${finalState.stageNumber} / ${finalState.totalStages}`;
     document.getElementById("gameover-title").textContent = isVictory
       ? "Great Job, Master Surveyor!"
-      : "Survey Session Ended";
+      : "Out of Time or Lives!";
 
     document.getElementById("final-score").textContent = finalState.score;
     document.getElementById("final-highscore").textContent = finalState.highScore;
     document.getElementById("final-targets").textContent = `${finalState.totalTargetsRead} / ${GAME_STAGES.length * 3}`;
     document.getElementById("final-time-bonus").textContent = `+${timeBonus}`;
+
+    // Show "Retry This Stage" only if the player lost mid-game
+    if (isVictory) {
+      btnRetryStage.classList.add("hidden");
+    } else {
+      btnRetryStage.classList.remove("hidden");
+    }
 
     gameoverModal.classList.remove("hidden");
   }

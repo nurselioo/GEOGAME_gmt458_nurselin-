@@ -34,7 +34,7 @@ body {
 }
 
 .small-text {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--text-muted);
 }
 
@@ -210,6 +210,11 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  border-right: 1px solid rgba(70, 39, 89, 0.5);
+}
+
+.layer-btn:last-child {
+  border-right: none;
 }
 
 .layer-btn.active {
@@ -366,7 +371,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.83rem;
+  font-size: 0.84rem;
   transition: transform 0.2s, border-color 0.2s;
   cursor: pointer;
 }
@@ -382,6 +387,11 @@ body {
 
 .target-item.blocked-err {
   border-left: 4px solid var(--accent-red);
+}
+
+.target-emoji-lg {
+  font-size: 1.2rem;
+  margin-right: 4px;
 }
 
 /* Simplified Chart Area */
@@ -426,18 +436,36 @@ body {
   box-shadow: 0 6px 22px rgba(236, 72, 153, 0.65);
 }
 
-.primary-btn.large {
+.secondary-btn {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.secondary-btn:hover {
+  border-color: var(--accent-pink-light);
+  background: rgba(236, 72, 153, 0.15);
+}
+
+.primary-btn.large,
+.secondary-btn.large {
   width: 100%;
-  padding: 14px;
-  font-size: 1rem;
-  margin-top: 12px;
+  padding: 13px;
+  font-size: 0.98rem;
+  margin-top: 10px;
 }
 
 .hidden {
   display: none !important;
 }
 
-/* --- CUSTOM TOTAL STATION & TERRAIN TARGET MARKERS --- */
+/* --- CUSTOM TOTAL STATION & LARGE TERRAIN TARGET MARKERS --- */
 .station-marker-svg-wrap {
   display: flex;
   align-items: center;
@@ -459,24 +487,29 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 5px;
   background: #281733;
   color: #fdf2f8;
   font-weight: 800;
-  font-size: 11px;
-  border: 2px solid #f472b6;
+  font-size: 13px;
+  border: 2.5px solid #f472b6;
   border-radius: 999px;
-  padding: 2px 7px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6);
+  padding: 4px 11px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65);
   transition: all 0.25s ease;
   white-space: nowrap;
+}
+
+.target-marker-pill .t-ico {
+  font-size: 17px;
+  line-height: 1;
 }
 
 .target-marker-pill.read-success {
   background: #10b981;
   border-color: #ffffff;
   color: #ffffff;
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 .target-marker-pill.read-blocked {
@@ -512,9 +545,9 @@ body {
   background: var(--bg-panel);
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  max-width: 520px;
+  max-width: 530px;
   width: 100%;
-  padding: 28px;
+  padding: 26px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
 }
 
@@ -530,35 +563,51 @@ body {
 }
 
 .modal-content h2 {
-  font-size: 1.45rem;
+  font-size: 1.4rem;
   margin-bottom: 10px;
 }
 
 .modal-desc {
   color: var(--text-muted);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   line-height: 1.5;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .rules-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 9px;
+  margin-bottom: 14px;
   background: var(--bg-card);
-  padding: 14px;
+  padding: 13px;
   border-radius: 10px;
   font-size: 0.85rem;
   line-height: 1.45;
+}
+
+.ideal-spot-box {
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.ideal-spot-box strong {
+  color: #34d399;
+  display: block;
+  margin-bottom: 4px;
 }
 
 .final-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  margin: 18px 0;
+  margin: 16px 0;
 }
 
 .f-stat {
@@ -577,6 +626,12 @@ body {
 .f-stat strong {
   font-size: 1.25rem;
   color: var(--accent-pink-light);
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 /* --- HERO ANIMATION (SPINNING GLOBE + TOTAL STATION) --- */

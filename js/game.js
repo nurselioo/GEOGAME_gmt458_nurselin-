@@ -24,6 +24,34 @@ function createGameEngine(stages) {
     }
   }
 
+  function startTimerLoop(onTick, onTimeOut) {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (!isGameActive) return;
+      timeLeft -= 1;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        isGameActive = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        updateHighScoreIfNeeded();
+        if (onTimeOut) onTimeOut();
+      }
+      if (onTick) onTick({
+        stageNumber: currentStageIndex + 1,
+        totalStages: stages.length,
+        score,
+        highScore,
+        timeLeft,
+        lives,
+        stationDeployCount,
+        totalTargetsRead,
+        isGameActive,
+        readTargetsCount: readTargetsInStage.size
+      });
+    }, 1000);
+  }
+
   return {
     startNewGame(onTick, onTimeOut) {
       currentStageIndex = 0;
@@ -34,18 +62,20 @@ function createGameEngine(stages) {
       totalTargetsRead = 0;
       readTargetsInStage.clear();
       isGameActive = true;
+      startTimerLoop(onTick, onTimeOut);
+    },
 
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        if (!isGameActive) return;
-        timeLeft -= 1;
-        if (timeLeft <= 0) {
-          timeLeft = 0;
-          this.stopGame();
-          if (onTimeOut) onTimeOut();
-        }
-        if (onTick) onTick(this.getState());
-      }, 1000);
+    // Retry from the exact stage where the player ran out of lives/time
+    retryCurrentStage(onTick, onTimeOut) {
+      timeLeft = 65;
+      lives = 3;
+      stationDeployCount = 0;
+      // Subtract uncompleted stage points if any were gained in the failed attempt
+      totalTargetsRead = Math.max(0, totalTargetsRead - readTargetsInStage.size);
+      score = Math.max(0, score - readTargetsInStage.size * 200);
+      readTargetsInStage.clear();
+      isGameActive = true;
+      startTimerLoop(onTick, onTimeOut);
     },
 
     stopGame() {
@@ -57,6 +87,14 @@ function createGameEngine(stages) {
       updateHighScoreIfNeeded();
     },
 
+    pauseTimer() {
+      isGameActive = false;
+    },
+
+    resumeTimer() {
+      isGameActive = true;
+    },
+
     getCurrentStage() {
       return stages[currentStageIndex];
     },
@@ -64,13 +102,13 @@ function createGameEngine(stages) {
     registerStationDeployment() {
       if (!isGameActive) return { allowed: false };
       stationDeployCount += 1;
-      // First setup in a region is free; each move costs 4 seconds
+      // First setup in a region is free; each extra move costs 3 seconds
       if (stationDeployCount > 1) {
-        timeLeft = Math.max(0, timeLeft - 4);
+        timeLeft = Math.max(0, timeLeft - 3);
       }
       return {
         allowed: true,
-        timePenalty: stationDeployCount > 1 ? 4 : 0,
+        timePenalty: stationDeployCount > 1 ? 3 : 0,
         deployCount: stationDeployCount
       };
     },
@@ -98,7 +136,6 @@ function createGameEngine(stages) {
       const stage = stages[currentStageIndex];
       const stageCompleted = readTargetsInStage.size === stage.targets.length;
 
-      // Bonus for measuring all 3 targets from a single station setup
       let singleStationBonus = 0;
       if (stageCompleted && stationDeployCount === 1) {
         singleStationBonus = 300;
@@ -126,7 +163,7 @@ function createGameEngine(stages) {
       currentStageIndex += 1;
       stationDeployCount = 0;
       readTargetsInStage.clear();
-      timeLeft += 15;
+      timeLeft += 20;
       return { gameFinished: false, timeBonus: 0 };
     },
 

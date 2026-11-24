@@ -31,7 +31,7 @@
     <div class="hud-metrics">
       <div class="metric-box">
         <span class="metric-label">STAGE</span>
-        <span id="hud-stage" class="metric-value">1 / 4</span>
+        <span id="hud-stage" class="metric-value">1 / 6</span>
       </div>
       <div class="metric-box" id="timer-box">
         <span class="metric-label">TIME LEFT</span>
@@ -65,6 +65,7 @@
           <span id="region-title">Loading Region...</span>
         </div>
         <div class="map-controls">
+          <button id="btn-show-briefing" class="layer-btn" title="Show Stage Guide">📖 Guide</button>
           <button id="btn-layer-topo" class="layer-btn active" title="Topographic Map">Topo Map</button>
           <button id="btn-layer-sat" class="layer-btn" title="Satellite View">Satellite</button>
         </div>
@@ -73,10 +74,10 @@
       <!-- Bottom Map Hint Banner + Floating Next Stage Button -->
       <div class="map-bottom-bar">
         <div id="toast-banner" class="toast-banner">
-          Click a high point on the map to place your <strong>Total Station</strong>! (-4 sec per move)
+          Click inside the pink box on high ground to place your <strong>Total Station</strong>!
         </div>
         <button id="btn-next-stage" class="primary-btn next-stage-floating hidden">
-          Next Region (+15 sec Bonus) ➔
+          Next Region (+20 sec Bonus) ➔
         </button>
       </div>
     </section>
@@ -99,21 +100,21 @@
             <strong id="station-count" class="mono">0</strong>
           </div>
           <div>
-            <span class="stat-lbl">Max Range</span>
-            <strong id="station-range" class="mono">3000 m</strong>
+            <span class="stat-lbl">Progress</span>
+            <strong id="targets-progress" class="mono">0 / 3</strong>
           </div>
         </div>
         <!-- Hot/Cold & Cartography Tip Box -->
         <div id="station-feedback-box" class="feedback-box">
-          💡 <strong>Tip:</strong> Look for closed brown circles (hills) on the map and click on top of one!
+          💡 <strong>Tip:</strong> Click on a high hill inside the pink dashed box!
         </div>
       </div>
 
-      <!-- 2. Target Points with Terrain Icons -->
+      <!-- 2. Target Points with Large Terrain Icons -->
       <div class="panel-card targets-card">
         <div class="card-header">
           <h2>🎯 TARGETS (M1 - M3)</h2>
-          <span id="targets-progress" class="badge-pill">0 / 3 Done</span>
+          <span class="small-text">Click item to view profile</span>
         </div>
         <ul id="target-list" class="target-list">
           <!-- Filled by JavaScript -->
@@ -143,7 +144,6 @@
   <!-- START MODAL -->
   <div id="start-modal" class="modal-backdrop">
     <div class="modal-content">
-      <!-- Animated Earth & Total Station Hero -->
       <div class="hero-visual">
         <span class="spinning-globe" title="Earth">🌍</span>
         <div class="laser-beam-mini"></div>
@@ -161,19 +161,38 @@
       <div class="modal-badge">GMT 458 • WEB GIS GEOGAME</div>
       <h2>TOPO-RUSH: Elevation Hunter</h2>
       <p class="modal-desc">
-        Place a <strong>Total Station</strong> on the map of Turkey to measure the height of <strong>3 target points</strong> in each region!
+        Place a <strong>Total Station</strong> inside the pink study box across <strong>6 regions of Turkey</strong> to measure <strong>3 target points</strong> in each stage!
       </p>
       <ul class="rules-list">
-        <li>🏔️ <strong>Find High Ground:</strong> Move your mouse to check ground height. Click on high hills to see over valleys.</li>
+        <li>🏔️ <strong>Find High Ground:</strong> Check the Briefing Guide before each region to see where to set up your station.</li>
         <li>🔥 <strong>Follow the Coach:</strong> After each click, the Station Coach tells you if you are <strong>Warm or Cold</strong> and which height you need!</li>
-        <li>⏱️ <strong>Beat the Clock:</strong> You have <strong>90 seconds</strong>. Moving the station costs <strong>-4s</strong>. Finishing a region gives <strong>+15s</strong>.</li>
-        <li>♥ <strong>Stay Safe:</strong> Clicking inside water or outside the pink box costs <strong>1 Life</strong>.</li>
+        <li>⏱️ <strong>Beat the Clock:</strong> You start with <strong>90 seconds</strong>. Moving the station costs <strong>-3s</strong>. Finishing a region gives <strong>+20s</strong>.</li>
+        <li>♥ <strong>Stay Safe:</strong> Clicking inside water or outside the pink dashed box costs <strong>1 Life</strong>.</li>
       </ul>
       <button id="btn-start-game" class="primary-btn large">Start Game 🚀</button>
     </div>
   </div>
 
-  <!-- GAME OVER MODAL -->
+  <!-- STAGE BRIEFING MODAL (SHOWN BEFORE EACH STAGE) -->
+  <div id="briefing-modal" class="modal-backdrop hidden">
+    <div class="modal-content briefing-card">
+      <div id="briefing-badge" class="modal-badge">STAGE 1 / 6 • EASY</div>
+      <h2 id="briefing-title">Region 1: Cappadocia</h2>
+      <p id="briefing-desc" class="modal-desc">
+        There are 3 targets in this area. Read their terrain features below:
+      </p>
+      <ul id="briefing-targets-list" class="rules-list">
+        <!-- Filled dynamically for each stage -->
+      </ul>
+      <div class="ideal-spot-box">
+        <strong>🎯 Where to Place Your Total Station:</strong>
+        <p id="briefing-strategy">Click on a high hill between the targets.</p>
+      </div>
+      <button id="btn-close-briefing" class="primary-btn large">Got It, Place Station! 📍</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER / RETRY MODAL -->
   <div id="gameover-modal" class="modal-backdrop hidden">
     <div class="modal-content">
       <div id="gameover-badge" class="modal-badge">MISSION COMPLETE</div>
@@ -189,14 +208,17 @@
         </div>
         <div class="f-stat">
           <span>Targets Measured</span>
-          <strong id="final-targets" class="mono">0 / 12</strong>
+          <strong id="final-targets" class="mono">0 / 18</strong>
         </div>
         <div class="f-stat">
           <span>Time Bonus</span>
           <strong id="final-time-bonus" class="mono">+0</strong>
         </div>
       </div>
-      <button id="btn-restart-game" class="primary-btn large">Play Again ↻</button>
+      <div class="modal-actions">
+        <button id="btn-retry-stage" class="primary-btn large">Retry This Stage ↻</button>
+        <button id="btn-restart-game" class="secondary-btn large">Start From Stage 1</button>
+      </div>
     </div>
   </div>
 
