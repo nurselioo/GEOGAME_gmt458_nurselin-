@@ -531,6 +531,58 @@ body {
   color: var(--accent-pink-light);
 }
 
+/* --- HERO ANIMATION (SPINNING GLOBE + TOTAL STATION) --- */
+.hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 10px;
+  background: rgba(236, 72, 153, 0.08);
+  border: 1px dashed rgba(244, 114, 182, 0.35);
+  border-radius: 12px;
+}
+
+.spinning-globe {
+  font-size: 3rem;
+  display: inline-block;
+  animation: floatAndSpin 5s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.55));
+}
+
+.laser-beam-mini {
+  width: 48px;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    #10b981 0px,
+    #10b981 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  animation: miniLaser 0.8s linear infinite;
+}
+
+.total-station-svg {
+  filter: drop-shadow(0 4px 10px rgba(236, 72, 153, 0.45));
+  animation: stationTilt 3.5s ease-in-out infinite;
+}
+
+@keyframes floatAndSpin {
+  0%, 100% { transform: translateY(0px) rotate(-8deg) scale(1); }
+  50% { transform: translateY(-5px) rotate(12deg) scale(1.06); }
+}
+
+@keyframes miniLaser {
+  to { background-position: -12px 0; }
+}
+
+@keyframes stationTilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-4deg); }
+}
+
 @media (max-width: 900px) {
   body { overflow: auto; height: auto; }
   .game-container { grid-template-columns: 1fr; height: auto; }
