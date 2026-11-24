@@ -1,6 +1,6 @@
 /**
  * js/data.js
- * Study regions in Turkey and Open-Elevation (SRTM DEM) height service
+ * Study regions in Turkey with terrain-specific target icons and elevation lookup
  */
 
 const GAME_STAGES = [
@@ -12,11 +12,11 @@ const GAME_STAGES = [
     zoom: 14,
     maxRange: 3000,
     bounds: { minLat: 38.625, maxLat: 38.665, minLng: 34.805, maxLng: 34.858 },
-    hint: "Pick a high spot in the center-north to see all 3 valley targets easily.",
+    hint: "Pick a high hill in the center-north to see all 3 valley targets.",
     targets: [
-      { id: "M1", name: "Red Valley Gate", lat: 38.6465, lng: 34.8380 },
-      { id: "M2", name: "Love Valley Floor", lat: 38.6510, lng: 34.8220 },
-      { id: "M3", name: "Goreme Open Museum", lat: 38.6395, lng: 34.8410 }
+      { id: "M1", icon: "🏔️", type: "Ridge", name: "Red Valley Gate", lat: 38.6465, lng: 34.8380 },
+      { id: "M2", icon: "🏞️", type: "Valley", name: "Love Valley Floor", lat: 38.6510, lng: 34.8220 },
+      { id: "M3", icon: "🏛️", type: "Plateau", name: "Goreme Open Museum", lat: 38.6395, lng: 34.8410 }
     ]
   },
   {
@@ -27,11 +27,11 @@ const GAME_STAGES = [
     zoom: 14,
     maxRange: 3000,
     bounds: { minLat: 40.085, maxLat: 40.125, minLng: 29.105, maxLng: 29.160 },
-    hint: "Pick a high ridge between the targets so no hill blocks your laser.",
+    hint: "Click on a high mountain peak above 1220 m so your laser clears the slopes.",
     targets: [
-      { id: "M1", name: "North Slope Top", lat: 40.1120, lng: 29.1240 },
-      { id: "M2", name: "East Ridge Point", lat: 40.1030, lng: 29.1445 },
-      { id: "M3", name: "South Peak Bench", lat: 40.0950, lng: 29.1290 }
+      { id: "M1", icon: "🏔️", type: "Slope", name: "North Slope Top", lat: 40.1120, lng: 29.1240 },
+      { id: "M2", icon: "⛰️", type: "Ridge", name: "East Ridge Point", lat: 40.1030, lng: 29.1445 },
+      { id: "M3", icon: "🏔️", type: "Peak", name: "South Peak Bench", lat: 40.0950, lng: 29.1290 }
     ]
   },
   {
@@ -42,11 +42,11 @@ const GAME_STAGES = [
     zoom: 14,
     maxRange: 2800,
     bounds: { minLat: 40.932, maxLat: 40.972, minLng: 41.075, maxLng: 41.135 },
-    hint: "Deep valley! Choose a high hill above the creek to see across.",
+    hint: "Deep creek valley! Stand on a high hill above the water to see both sides.",
     targets: [
-      { id: "M1", name: "Firtina Creek Bend", lat: 40.9580, lng: 41.0950 },
-      { id: "M2", name: "Upper Kavrun Path", lat: 40.9465, lng: 41.1160 },
-      { id: "M3", name: "West Rocky Ridge", lat: 40.9540, lng: 41.1120 }
+      { id: "M1", icon: "💧", type: "Creek", name: "Firtina Creek Bend", lat: 40.9580, lng: 41.0950 },
+      { id: "M2", icon: "🏞️", type: "Highland", name: "Upper Kavrun Path", lat: 40.9465, lng: 41.1160 },
+      { id: "M3", icon: "⛰️", type: "Cliff", name: "West Rocky Ridge", lat: 40.9540, lng: 41.1120 }
     ]
   },
   {
@@ -57,12 +57,12 @@ const GAME_STAGES = [
     zoom: 13,
     maxRange: 3200,
     bounds: { minLat: 38.595, maxLat: 38.650, minLng: 42.195, maxLng: 42.280 },
-    hint: "Do not click inside the lake! Use the high crater rim on the east side.",
+    hint: "Do not click in the lake! Use the high crater rim on the east side.",
     waterZone: { lat: 38.6250, lng: 42.2220, radius: 1350 },
     targets: [
-      { id: "M1", name: "East Lava Hill", lat: 38.6180, lng: 42.2560 },
-      { id: "M2", name: "South Crater Rim", lat: 38.6040, lng: 42.2410 },
-      { id: "M3", name: "Northeast Ridge", lat: 38.6360, lng: 42.2520 }
+      { id: "M1", icon: "🌋", type: "Volcano", name: "East Lava Hill", lat: 38.6180, lng: 42.2560 },
+      { id: "M2", icon: "🌊", type: "Lake Shore", name: "South Crater Rim", lat: 38.6040, lng: 42.2410 },
+      { id: "M3", icon: "🏔️", type: "Crater Rim", name: "Northeast Ridge", lat: 38.6360, lng: 42.2520 }
     ]
   }
 ];

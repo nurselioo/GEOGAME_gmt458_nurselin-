@@ -1,7 +1,7 @@
 /**
  * js/app.js
- * Leaflet map, Turf.js spatial checks, Chart.js profile,
- * DOM updates, and Event Handlers
+ * Leaflet map, custom SVG Total Station icon, terrain target markers,
+ * Hot/Cold Surveyor Coach, simplified Chart.js profile, and Event Handlers
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -32,6 +32,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const startModal = document.getElementById("start-modal");
   const gameoverModal = document.getElementById("gameover-modal");
 
+  // Professional SVG Total Station Marker HTML
+  const TOTAL_STATION_MARKER_HTML = `
+    <div class="station-marker-svg-wrap" style="width:40px;height:40px;">
+      <svg viewBox="0 0 64 64" width="28" height="28" aria-label="Total Station">
+        <line x1="32" y1="34" x2="14" y2="60" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
+        <line x1="32" y1="34" x2="50" y2="60" stroke="#f472b6" stroke-width="4" stroke-linecap="round"/>
+        <line x1="32" y1="34" x2="32" y2="62" stroke="#fbcfe8" stroke-width="4" stroke-linecap="round"/>
+        <rect x="22" y="29" width="20" height="5" rx="2" fill="#fbcfe8"/>
+        <rect x="20" y="11" width="24" height="18" rx="4" fill="#ec4899" stroke="#ffffff" stroke-width="2"/>
+        <circle cx="28" cy="20" r="5" fill="#130b18" stroke="#38bdf8" stroke-width="2"/>
+        <path d="M24 11 V7 H40 V11" fill="none" stroke="#f472b6" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+  `;
+
   // Initialize Leaflet Map
   const map = L.map("map", { zoomControl: true }).setView([39.0, 35.0], 6);
 
@@ -55,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let elevationChart = null;
   let isProcessingClick = false;
 
+  // Simplified Side-View Chart.js Setup
   function initChart() {
     const ctx = document.getElementById("elevationChart").getContext("2d");
     elevationChart = new Chart(ctx, {
@@ -63,20 +79,20 @@ document.addEventListener("DOMContentLoaded", () => {
         labels: [],
         datasets: [
           {
-            label: "Ground (m)",
+            label: "Hill / Ground",
             data: [],
             borderColor: "#f472b6",
-            backgroundColor: "rgba(236, 72, 153, 0.22)",
+            backgroundColor: "rgba(236, 72, 153, 0.25)",
             fill: true,
-            tension: 0.3,
-            pointRadius: 2
+            tension: 0.35,
+            pointRadius: 0
           },
           {
-            label: "Laser Line",
+            label: "Laser Sight",
             data: [],
             borderColor: "#10b981",
-            borderDash: [6, 4],
-            borderWidth: 2,
+            borderDash: [5, 5],
+            borderWidth: 2.5,
             fill: false,
             pointRadius: 0
           }
@@ -86,11 +102,17 @@ document.addEventListener("DOMContentLoaded", () => {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: "#fdf2f8", font: { size: 11 } } }
+          legend: { labels: { color: "#fdf2f8", font: { size: 11 }, boxWidth: 14 } }
         },
         scales: {
-          x: { ticks: { color: "#d8b4e2", font: { size: 10 } }, grid: { color: "#281733" } },
-          y: { ticks: { color: "#d8b4e2", font: { size: 10 } }, grid: { color: "#462759" } }
+          x: {
+            ticks: { color: "#d8b4e2", font: { size: 10 }, maxTicksLimit: 4 },
+            grid: { display: false }
+          },
+          y: {
+            ticks: { color: "#d8b4e2", font: { size: 10 }, maxTicksLimit: 4 },
+            grid: { color: "rgba(70, 39, 89, 0.5)" }
+          }
         }
       }
     });
@@ -153,9 +175,9 @@ document.addEventListener("DOMContentLoaded", () => {
     targetsProgressEl.textContent = `0 / ${stage.targets.length} Done`;
     profileSelector.disabled = true;
     btnNextStage.classList.add("hidden");
-    losStatusText.textContent = "Green dashed line = clear view. Red = hill blocks view.";
+    losStatusText.textContent = "Dashed line = Laser beam. If pink ground rises above it, a hill blocks your view.";
     losStatusText.style.color = "#d8b4e2";
-    setFeedback(`💡 <strong>Goal:</strong> ${stage.hint}`, "info");
+    setFeedback(`💡 <strong>How to Start:</strong> ${stage.hint}`, "info");
 
     const rectBounds = [
       [stage.bounds.minLat, stage.bounds.minLng],
@@ -175,7 +197,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fillColor: "#ec4899",
         fillOpacity: 0.22,
         weight: 1.5
-      }).bindTooltip("Water Zone: Do Not Place Station Here").addTo(boundaryLayer);
+      }).bindTooltip("💧 Crater Lake: Do Not Place Station Here").addTo(boundaryLayer);
     }
 
     map.flyTo(stage.center, stage.zoom, { duration: 1.1 });
@@ -198,19 +220,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const isRead = readSet.has(t.id);
       const status = statusMap[t.id];
 
-      let markerClass = "target-marker-icon";
-      if (isRead) markerClass += " read-success";
-      else if (status === "blocked" || status === "out_of_range") markerClass += " read-blocked";
+      let pillClass = "target-marker-pill";
+      if (isRead) pillClass += " read-success";
+      else if (status === "blocked" || status === "out_of_range") pillClass += " read-blocked";
 
       const icon = L.divIcon({
         className: "",
-        html: `<div class="${markerClass}" style="width:28px;height:28px;">${t.id}</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14]
+        html: `<div class="${pillClass}">${t.icon} ${t.id}</div>`,
+        iconSize: [52, 26],
+        iconAnchor: [26, 13]
       });
 
       const marker = L.marker([t.lat, t.lng], { icon }).addTo(targetMarkersLayer);
-      marker.bindTooltip(`${t.id} - ${t.name}${isRead ? ` (${targetElevations[t.id]} m)` : " (Not measured yet)"}`);
+      marker.bindTooltip(`${t.icon} ${t.id} (${t.type}): ${t.name}${isRead ? ` • ${targetElevations[t.id]} m` : ""}`);
 
       const li = document.createElement("li");
       li.className = "target-item";
@@ -227,7 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       li.innerHTML = `
-        <div><strong>${t.id}</strong> • ${t.name}</div>
+        <div><span>${t.icon}</span> <strong>${t.id}</strong> • ${t.name}</div>
         <div>${statusBadge}</div>
       `;
 
@@ -242,8 +264,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Helper: Direction hint from station to blocked target
+  function getCardinalDirection(fromLat, fromLng, toLat, toLng) {
+    const dLat = toLat - fromLat;
+    const dLng = toLng - fromLng;
+    const ns = dLat > 0.002 ? "North" : dLat < -0.002 ? "South" : "";
+    const ew = dLng > 0.002 ? "East" : dLng < -0.002 ? "West" : "";
+    return [ns, ew].filter(Boolean).join("-") || "Center";
+  }
+
   // =========================================================================
-  // EVENT HANDLER 1: Map Click to Place Total Station & Generate Feedback
+  // EVENT HANDLER 1: Map Click to Place Total Station & Hot/Cold Guidance
   // =========================================================================
   map.on("click", async (e) => {
     const state = game.getState();
@@ -262,7 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!inBounds) {
       const remLives = game.penalizeInvalidPlacement();
       updateHUD(game.getState());
-      setFeedback("❌ <strong>Bad Spot:</strong> You clicked outside the pink study area! Stay inside the dashed box.", "bad");
+      setFeedback("❄️ <strong>FREEZING (Outside Area):</strong> You clicked outside the pink dashed box! Click closer to the M1–M3 targets.", "bad");
       showBanner("⚠️ Stay inside the pink study box! <strong>-1 Life</strong>", "error");
       if (remLives === 0) triggerGameOver(false);
       return;
@@ -278,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (distToLake <= stage.waterZone.radius) {
         const remLives = game.penalizeInvalidPlacement();
         updateHUD(game.getState());
-        setFeedback("🌊 <strong>Bad Spot:</strong> You cannot set up a tripod in deep water! Click on dry land.", "bad");
+        setFeedback("❄️ <strong>COLD (Water Hazard):</strong> Tripods sink in water! In surveying, always pick dry high ground on the crater rim.", "bad");
         showBanner("🌊 Cannot place station in water! <strong>-1 Life</strong>", "error");
         if (remLives === 0) triggerGameOver(false);
         return;
@@ -296,14 +327,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const stationIcon = L.divIcon({
       className: "",
-      html: `<div class="station-marker-icon" style="width:32px;height:32px;">📐</div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
+      html: TOTAL_STATION_MARKER_HTML,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
     });
 
     L.marker([lat, lng], { icon: stationIcon })
       .addTo(stationLayer)
-      .bindTooltip("Total Station");
+      .bindTooltip("📡 Your Total Station");
 
     L.circle([lat, lng], {
       radius: stage.maxRange,
@@ -336,8 +367,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentProfiles = [];
     const visibleIds = [];
-    const blockedNames = [];
-    const farNames = [];
+    const blockedDetails = [];
+    const farDetails = [];
+    let highestObstacle = 0;
+
     const statusMap = {};
 
     stage.targets.forEach((t, tIdx) => {
@@ -356,12 +389,15 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       let isBlocked = false;
+      let maxRidgeOnLine = 0;
       for (let i = 1; i < SAMPLES; i++) {
         if (terrainElevs[i] > losElevs[i]) {
           isBlocked = true;
-          break;
+          if (terrainElevs[i] > maxRidgeOnLine) maxRidgeOnLine = terrainElevs[i];
         }
       }
+
+      if (maxRidgeOnLine > highestObstacle) highestObstacle = maxRidgeOnLine;
 
       const outOfRange = distanceMeters > stage.maxRange;
       let lineColor = "#10b981";
@@ -370,11 +406,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (outOfRange) {
         lineColor = "#fbbf24";
         status = "out_of_range";
-        farNames.push(`${t.id} (${distanceMeters}m)`);
+        const dir = getCardinalDirection(lat, lng, t.lat, t.lng);
+        farDetails.push({ id: t.id, dist: distanceMeters, dir });
       } else if (isBlocked) {
         lineColor = "#f43f5e";
         status = "blocked";
-        blockedNames.push(t.id);
+        const dir = getCardinalDirection(lat, lng, t.lat, t.lng);
+        blockedDetails.push({ id: t.id, ridgeHeight: Math.round(maxRidgeOnLine), dir });
       } else {
         visibleIds.push(t.id);
       }
@@ -408,8 +446,8 @@ document.addEventListener("DOMContentLoaded", () => {
     updateHUD(game.getState());
     renderTargetMarkersAndList(stage, result.readSet, statusMap);
 
-    // Build clear explanation of why this station spot is good or bad
-    buildStationExplanation(groundHeight, visibleIds, blockedNames, farNames, result);
+    // Hot / Cold Surveyor Coaching Message
+    buildHotColdCoaching(groundHeight, visibleIds, blockedDetails, farDetails, highestObstacle, result);
 
     profileSelector.disabled = false;
     profileSelector.value = "0";
@@ -423,50 +461,57 @@ document.addEventListener("DOMContentLoaded", () => {
       btnNextStage.classList.remove("hidden");
     } else {
       const penaltyTxt = deployInfo.timePenalty ? ` (-${deployInfo.timePenalty}s)` : "";
-      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Move the station to see the remaining targets!`);
+      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Follow the Station Coach on the right!`);
     }
 
     isProcessingClick = false;
   });
 
-  function buildStationExplanation(height, visibleIds, blockedNames, farNames, result) {
-    if (result.stageCompleted && visibleIds.length === 3) {
-      setFeedback(
-        `✅ <strong>Great Spot (${Math.round(height)} m)!</strong> High and central enough to see all 3 targets with zero hills in the way.`,
-        "good"
-      );
-      return;
-    }
-
+  function buildHotColdCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
     if (result.stageCompleted) {
       setFeedback(
-        `✅ <strong>Region Complete!</strong> You combined multiple setups to measure all 3 targets. Click Next Region below.`,
+        `🔥 <strong>BULLSEYE! Region Complete (${Math.round(height)} m):</strong> Great surveying! Click the glowing <b>Next Region</b> button on the map.`,
         "good"
       );
       return;
     }
 
-    const reasons = [];
-    if (visibleIds.length > 0) {
-      reasons.push(`✅ Clear view to <b>${visibleIds.join(", ")}</b>.`);
-    }
-    if (blockedNames.length > 0) {
-      reasons.push(`❌ A hill blocks <b>${blockedNames.join(", ")}</b> because ${Math.round(height)} m is too low or behind a ridge.`);
-    }
-    if (farNames.length > 0) {
-      reasons.push(`⚠️ <b>${farNames.join(", ")}</b> is outside the pink range circle. Move closer to the center.`);
+    // Determine Hot / Warm / Cold temperature
+    let tempBadge = "";
+    let level = "warn";
+
+    if (visibleIds.length === 2) {
+      tempBadge = "🔥 <strong>VERY HOT (2/3 Visible):</strong> You are very close to a perfect spot!";
+      level = "good";
+    } else if (visibleIds.length === 1) {
+      tempBadge = "🌤️ <strong>WARM (1/3 Visible):</strong> Good start, but you need a better angle or higher ground.";
+      level = "warn";
+    } else {
+      tempBadge = "❄️ <strong>COLD (0/3 Visible):</strong> You are standing in a low valley or behind a big hill.";
+      level = "bad";
     }
 
-    const level = visibleIds.length > 0 ? "warn" : "bad";
-    setFeedback(reasons.join(" "), level);
+    // Actionable next-click criteria
+    let advice = "";
+    if (farDetails.length > 0) {
+      const f = farDetails[0];
+      advice = `📏 <b>Rule:</b> <b>${f.id}</b> is ${f.dist}m away (too far). Move <b>${f.dir}</b> toward the middle of the targets.`;
+    } else if (blockedDetails.length > 0) {
+      const b = blockedDetails[0];
+      const recommendedHeight = Math.round(highestObstacle + 15);
+      advice = `⛰️ <b>Rule:</b> A <b>${b.ridgeHeight} m</b> hill blocks <b>${b.id}</b>. Move your cursor to find a hill higher than <b>${recommendedHeight} m</b> toward the <b>${b.dir}</b>!`;
+    }
+
+    setFeedback(`${tempBadge}<br>${advice}`, level);
   }
 
   function drawProfileChart(profile) {
     if (!profile || !elevationChart) return;
 
     const labels = profile.terrainElevs.map((_, i) => {
-      const d = Math.round((profile.distanceMeters / (profile.terrainElevs.length - 1)) * i);
-      return `${d}m`;
+      if (i === 0) return "Station";
+      if (i === profile.terrainElevs.length - 1) return profile.target.id;
+      return "";
     });
 
     elevationChart.data.labels = labels;
@@ -478,13 +523,13 @@ document.addEventListener("DOMContentLoaded", () => {
     elevationChart.update();
 
     if (profile.status === "visible") {
-      losStatusText.innerHTML = `✅ <strong>${profile.target.id}:</strong> Clear laser line! Distance: <b>${profile.distanceMeters}m</b> | Diff: <b>${profile.deltaH}m</b>`;
+      losStatusText.innerHTML = `✅ <strong>${profile.target.id}:</strong> Clear sight! (${profile.distanceMeters}m away)`;
       losStatusText.style.color = "#10b981";
     } else if (profile.status === "out_of_range") {
       losStatusText.innerHTML = `⚠️ <strong>${profile.target.id}:</strong> Too far (${profile.distanceMeters}m). Move closer.`;
       losStatusText.style.color = "#fbbf24";
     } else {
-      losStatusText.innerHTML = `❌ <strong>${profile.target.id}:</strong> Hill blocks laser! Pick a higher spot.`;
+      losStatusText.innerHTML = `❌ <strong>${profile.target.id}:</strong> Pink hill crosses the dashed laser line!`;
       losStatusText.style.color = "#f43f5e";
     }
   }

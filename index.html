@@ -70,23 +70,28 @@
         </div>
       </div>
 
-      <!-- Bottom Map Hint Banner -->
-      <div id="toast-banner" class="toast-banner">
-        Click a high point on the map to place your <strong>Total Station</strong>! (-4 sec per move)
+      <!-- Bottom Map Hint Banner + Floating Next Stage Button -->
+      <div class="map-bottom-bar">
+        <div id="toast-banner" class="toast-banner">
+          Click a high point on the map to place your <strong>Total Station</strong>! (-4 sec per move)
+        </div>
+        <button id="btn-next-stage" class="primary-btn next-stage-floating hidden">
+          Next Region (+15 sec Bonus) ➔
+        </button>
       </div>
     </section>
 
-    <!-- RIGHT PANEL: SIMPLE MISSION & FEEDBACK -->
+    <!-- RIGHT PANEL: SIMPLE SURVEY GUIDE & GRAPH -->
     <aside class="side-panel">
-      <!-- 1. Simple Station Info & Feedback -->
+      <!-- 1. Station Report & Hot/Cold Surveyor Coach -->
       <div class="panel-card station-card">
         <div class="card-header">
-          <h2>📡 STATION REPORT</h2>
+          <h2>📡 STATION COACH</h2>
           <span id="cursor-elev-badge" class="badge-pill">Cursor: -- m</span>
         </div>
         <div class="station-stats">
           <div>
-            <span class="stat-lbl">Station Height</span>
+            <span class="stat-lbl">Your Height</span>
             <strong id="station-elev" class="mono">-- m</strong>
           </div>
           <div>
@@ -98,13 +103,13 @@
             <strong id="station-range" class="mono">3000 m</strong>
           </div>
         </div>
-        <!-- Why this spot is good or bad -->
+        <!-- Hot/Cold & Cartography Tip Box -->
         <div id="station-feedback-box" class="feedback-box">
-          Click on a high hill on the map to set up your Total Station.
+          💡 <strong>Tip:</strong> Look for closed brown circles (hills) on the map and click on top of one!
         </div>
       </div>
 
-      <!-- 2. Target Points -->
+      <!-- 2. Target Points with Terrain Icons -->
       <div class="panel-card targets-card">
         <div class="card-header">
           <h2>🎯 TARGETS (M1 - M3)</h2>
@@ -115,28 +120,23 @@
         </ul>
       </div>
 
-      <!-- 3. Chart.js Elevation Profile -->
+      <!-- 3. Simple Side-View Elevation Chart -->
       <div class="panel-card chart-card">
         <div class="card-header">
-          <h2>📈 HEIGHT PROFILE</h2>
+          <h2>📈 SIDE VIEW (GROUND VS LASER)</h2>
           <select id="profile-selector" class="profile-select" disabled>
-            <option value="0">Line to M1</option>
-            <option value="1">Line to M2</option>
-            <option value="2">Line to M3</option>
+            <option value="0">View M1</option>
+            <option value="1">View M2</option>
+            <option value="2">View M3</option>
           </select>
         </div>
         <div class="chart-container">
           <canvas id="elevationChart"></canvas>
         </div>
         <p id="los-status-text" class="los-note">
-          Green dashed line = clear view. Red = hill blocks view.
+          Dashed line = Laser beam. If pink ground rises above it, a hill blocks your view.
         </p>
       </div>
-
-      <!-- Next Stage Button -->
-      <button id="btn-next-stage" class="primary-btn hidden">
-        Next Region (+15 sec Bonus) ➔
-      </button>
     </aside>
   </main>
 
@@ -148,17 +148,12 @@
         <span class="spinning-globe" title="Earth">🌍</span>
         <div class="laser-beam-mini"></div>
         <svg class="total-station-svg" viewBox="0 0 64 64" width="54" height="54" aria-label="Total Station">
-          <!-- Tripod Legs -->
           <line x1="32" y1="34" x2="14" y2="60" stroke="#f472b6" stroke-width="3" stroke-linecap="round"/>
           <line x1="32" y1="34" x2="50" y2="60" stroke="#f472b6" stroke-width="3" stroke-linecap="round"/>
           <line x1="32" y1="34" x2="32" y2="62" stroke="#db2777" stroke-width="3" stroke-linecap="round"/>
-          <!-- Tribrach Base -->
           <rect x="23" y="29" width="18" height="5" rx="2" fill="#fbcfe8"/>
-          <!-- Instrument Body -->
           <rect x="21" y="12" width="22" height="17" rx="4" fill="#ec4899" stroke="#fdf2f8" stroke-width="1.5"/>
-          <!-- Telescope Lens -->
           <circle cx="27" cy="20" r="4.5" fill="#130b18" stroke="#38bdf8" stroke-width="1.5"/>
-          <!-- Top Handle -->
           <path d="M24 12 V8 H40 V12" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
       </div>
@@ -166,13 +161,13 @@
       <div class="modal-badge">GMT 458 • WEB GIS GEOGAME</div>
       <h2>TOPO-RUSH: Elevation Hunter</h2>
       <p class="modal-desc">
-        Place a <strong>Total Station</strong> on the map of Turkey to measure the elevation of <strong>3 target points</strong> in each region!
+        Place a <strong>Total Station</strong> on the map of Turkey to measure the height of <strong>3 target points</strong> in each region!
       </p>
       <ul class="rules-list">
-        <li>🗺️ <strong>Read Contour Lines:</strong> Look at the hills and valleys. Click a clear high spot that can see all targets.</li>
-        <li>⏱️ <strong>Beat the Clock:</strong> You have <strong>90 seconds</strong>. Moving the station costs <strong>-4 seconds</strong>. Finishing a region gives <strong>+15 seconds</strong>.</li>
-        <li>📈 <strong>Check Line of Sight:</strong> If a hill blocks the laser (Red), move your station to a better height!</li>
-        <li>♥ <strong>Stay Safe:</strong> Placing the station inside water or outside the area costs <strong>1 Life</strong>.</li>
+        <li>🏔️ <strong>Find High Ground:</strong> Move your mouse to check ground height. Click on high hills to see over valleys.</li>
+        <li>🔥 <strong>Follow the Coach:</strong> After each click, the Station Coach tells you if you are <strong>Warm or Cold</strong> and which height you need!</li>
+        <li>⏱️ <strong>Beat the Clock:</strong> You have <strong>90 seconds</strong>. Moving the station costs <strong>-4s</strong>. Finishing a region gives <strong>+15s</strong>.</li>
+        <li>♥ <strong>Stay Safe:</strong> Clicking inside water or outside the pink box costs <strong>1 Life</strong>.</li>
       </ul>
       <button id="btn-start-game" class="primary-btn large">Start Game 🚀</button>
     </div>
