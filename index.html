@@ -76,13 +76,13 @@
       </div>
     </section>
 
-    <!-- RIGHT PANEL: MISSION & ELEVATION PROFILE -->
+    <!-- RIGHT PANEL: SIMPLE MISSION & FEEDBACK -->
     <aside class="side-panel">
-      <!-- Station Info -->
+      <!-- 1. Simple Station Info & Feedback -->
       <div class="panel-card station-card">
         <div class="card-header">
-          <h2>📡 STATION STATUS</h2>
-          <span id="station-coords" class="mono small-text">Waiting for setup</span>
+          <h2>📡 STATION REPORT</h2>
+          <span id="cursor-elev-badge" class="badge-pill">Cursor: -- m</span>
         </div>
         <div class="station-stats">
           <div>
@@ -90,42 +90,46 @@
             <strong id="station-elev" class="mono">-- m</strong>
           </div>
           <div>
-            <span class="stat-lbl">Setups Used</span>
+            <span class="stat-lbl">Moves Used</span>
             <strong id="station-count" class="mono">0</strong>
           </div>
           <div>
             <span class="stat-lbl">Max Range</span>
-            <strong id="station-range" class="mono">2500 m</strong>
+            <strong id="station-range" class="mono">3000 m</strong>
           </div>
+        </div>
+        <!-- Why this spot is good or bad -->
+        <div id="station-feedback-box" class="feedback-box">
+          Click on a high hill on the map to set up your Total Station.
         </div>
       </div>
 
-      <!-- Target Points -->
+      <!-- 2. Target Points -->
       <div class="panel-card targets-card">
         <div class="card-header">
-          <h2>🎯 TARGET POINTS</h2>
-          <span id="targets-progress" class="badge-pill">0 / 3</span>
+          <h2>🎯 TARGETS (M1 - M3)</h2>
+          <span id="targets-progress" class="badge-pill">0 / 3 Done</span>
         </div>
         <ul id="target-list" class="target-list">
           <!-- Filled by JavaScript -->
         </ul>
       </div>
 
-      <!-- Chart.js Elevation Profile -->
+      <!-- 3. Chart.js Elevation Profile -->
       <div class="panel-card chart-card">
         <div class="card-header">
-          <h2>📈 ELEVATION PROFILE</h2>
+          <h2>📈 HEIGHT PROFILE</h2>
           <select id="profile-selector" class="profile-select" disabled>
-            <option value="0">Target 1 (M1)</option>
-            <option value="1">Target 2 (M2)</option>
-            <option value="2">Target 3 (M3)</option>
+            <option value="0">Line to M1</option>
+            <option value="1">Line to M2</option>
+            <option value="2">Line to M3</option>
           </select>
         </div>
         <div class="chart-container">
           <canvas id="elevationChart"></canvas>
         </div>
         <p id="los-status-text" class="los-note">
-          Click on the map to place the station and view the terrain profile.
+          Green dashed line = clear view. Red = hill blocks view.
         </p>
       </div>
 

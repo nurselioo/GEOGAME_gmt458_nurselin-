@@ -1,7 +1,7 @@
 /**
  * js/app.js
  * Leaflet map, Turf.js spatial checks, Chart.js profile,
- * DOM updates, and 3 core Event Handlers
+ * DOM updates, and Event Handlers
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -17,10 +17,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const regionTitle = document.getElementById("region-title");
   const toastBanner = document.getElementById("toast-banner");
 
-  const stationCoordsEl = document.getElementById("station-coords");
+  const cursorElevBadge = document.getElementById("cursor-elev-badge");
   const stationElevEl = document.getElementById("station-elev");
   const stationCountEl = document.getElementById("station-count");
   const stationRangeEl = document.getElementById("station-range");
+  const stationFeedbackBox = document.getElementById("station-feedback-box");
 
   const targetListEl = document.getElementById("target-list");
   const targetsProgressEl = document.getElementById("targets-progress");
@@ -31,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const startModal = document.getElementById("start-modal");
   const gameoverModal = document.getElementById("gameover-modal");
 
-  // Initialize Leaflet Map centered on Turkey
+  // Initialize Leaflet Map
   const map = L.map("map", { zoomControl: true }).setView([39.0, 35.0], 6);
 
   const topoLayer = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", {
@@ -44,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
     attribution: "© Esri World Imagery"
   });
 
-  // Map Layer Groups
   let targetMarkersLayer = L.layerGroup().addTo(map);
   let stationLayer = L.layerGroup().addTo(map);
   let sightLinesLayer = L.layerGroup().addTo(map);
@@ -55,7 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let elevationChart = null;
   let isProcessingClick = false;
 
-  // Initialize Chart.js with Pink Terrain Curve
   function initChart() {
     const ctx = document.getElementById("elevationChart").getContext("2d");
     elevationChart = new Chart(ctx, {
@@ -64,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
         labels: [],
         datasets: [
           {
-            label: "Ground Height (m)",
+            label: "Ground (m)",
             data: [],
             borderColor: "#f472b6",
             backgroundColor: "rgba(236, 72, 153, 0.22)",
@@ -73,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pointRadius: 2
           },
           {
-            label: "Laser Line (LOS)",
+            label: "Laser Line",
             data: [],
             borderColor: "#10b981",
             borderDash: [6, 4],
@@ -107,7 +106,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (type === "success") toastBanner.classList.add("success");
   }
 
-  // Update Top HUD Elements via DOM Manipulation
+  function setFeedback(htmlText, level = "info") {
+    stationFeedbackBox.innerHTML = htmlText;
+    stationFeedbackBox.className = "feedback-box";
+    if (level === "good") stationFeedbackBox.classList.add("good");
+    if (level === "warn") stationFeedbackBox.classList.add("warn");
+    if (level === "bad") stationFeedbackBox.classList.add("bad");
+  }
+
   function updateHUD(state) {
     hudStage.textContent = `${state.stageNumber} / ${state.totalStages}`;
     const mins = String(Math.floor(state.timeLeft / 60)).padStart(2, "0");
@@ -125,6 +131,13 @@ document.addEventListener("DOMContentLoaded", () => {
     hudHighscore.textContent = state.highScore;
   }
 
+  // Live cursor height preview while moving mouse over map
+  map.on("mousemove", (e) => {
+    if (!game.getState().isGameActive) return;
+    const estHeight = computeDeterministicElevation(e.latlng.lat, e.latlng.lng);
+    cursorElevBadge.textContent = `Cursor: ~${Math.round(estHeight)} m`;
+  });
+
   async function loadStage(stage) {
     targetMarkersLayer.clearLayers();
     stationLayer.clearLayers();
@@ -134,17 +147,16 @@ document.addEventListener("DOMContentLoaded", () => {
     targetElevations = {};
 
     regionTitle.textContent = `${stage.name} (${stage.difficulty})`;
-    stationCoordsEl.textContent = "Waiting for setup";
     stationElevEl.textContent = "-- m";
     stationCountEl.textContent = "0";
     stationRangeEl.textContent = `${stage.maxRange} m`;
-    targetsProgressEl.textContent = `0 / ${stage.targets.length}`;
+    targetsProgressEl.textContent = `0 / ${stage.targets.length} Done`;
     profileSelector.disabled = true;
     btnNextStage.classList.add("hidden");
-    losStatusText.textContent = "Click on the map to place the station and view the terrain profile.";
+    losStatusText.textContent = "Green dashed line = clear view. Red = hill blocks view.";
     losStatusText.style.color = "#d8b4e2";
+    setFeedback(`💡 <strong>Goal:</strong> ${stage.hint}`, "info");
 
-    // Study Area Boundary Box (Pink Dashed)
     const rectBounds = [
       [stage.bounds.minLat, stage.bounds.minLng],
       [stage.bounds.maxLat, stage.bounds.maxLng]
@@ -156,7 +168,6 @@ document.addEventListener("DOMContentLoaded", () => {
       fillOpacity: 0.04
     }).addTo(boundaryLayer);
 
-    // Restricted Crater Lake Zone
     if (stage.waterZone) {
       L.circle([stage.waterZone.lat, stage.waterZone.lng], {
         radius: stage.waterZone.radius,
@@ -181,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderTargetMarkersAndList(stage, readSet, statusMap) {
     targetMarkersLayer.clearLayers();
     targetListEl.innerHTML = "";
-    targetsProgressEl.textContent = `${readSet.size} / ${stage.targets.length}`;
+    targetsProgressEl.textContent = `${readSet.size} / ${stage.targets.length} Done`;
 
     stage.targets.forEach((t, index) => {
       const isRead = readSet.has(t.id);
@@ -199,9 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const marker = L.marker([t.lat, t.lng], { icon }).addTo(targetMarkersLayer);
-      marker.bindTooltip(`${t.id} - ${t.name}${isRead ? ` (Height: ${targetElevations[t.id]} m)` : " (Hidden)"}`);
+      marker.bindTooltip(`${t.id} - ${t.name}${isRead ? ` (${targetElevations[t.id]} m)` : " (Not measured yet)"}`);
 
-      // Build Target List Item in DOM
       const li = document.createElement("li");
       li.className = "target-item";
       if (isRead) li.classList.add("visible-ok");
@@ -217,9 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       li.innerHTML = `
-        <div>
-          <strong>${t.id}</strong> • ${t.name}
-        </div>
+        <div><strong>${t.id}</strong> • ${t.name}</div>
         <div>${statusBadge}</div>
       `;
 
@@ -235,7 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // EVENT HANDLER 1: Map Click to Place Total Station & Run Line-of-Sight
+  // EVENT HANDLER 1: Map Click to Place Total Station & Generate Feedback
   // =========================================================================
   map.on("click", async (e) => {
     const state = game.getState();
@@ -244,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const stage = game.getCurrentStage();
     const { lat, lng } = e.latlng;
 
-    // 1. Check Study Area Bounds
+    // 1. Out of bounds check
     const inBounds =
       lat >= stage.bounds.minLat &&
       lat <= stage.bounds.maxLat &&
@@ -254,12 +262,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!inBounds) {
       const remLives = game.penalizeInvalidPlacement();
       updateHUD(game.getState());
+      setFeedback("❌ <strong>Bad Spot:</strong> You clicked outside the pink study area! Stay inside the dashed box.", "bad");
       showBanner("⚠️ Stay inside the pink study box! <strong>-1 Life</strong>", "error");
       if (remLives === 0) triggerGameOver(false);
       return;
     }
 
-    // 2. Check Water Zone
+    // 2. Water check
     if (stage.waterZone) {
       const distToLake = turf.distance(
         turf.point([lng, lat]),
@@ -269,14 +278,15 @@ document.addEventListener("DOMContentLoaded", () => {
       if (distToLake <= stage.waterZone.radius) {
         const remLives = game.penalizeInvalidPlacement();
         updateHUD(game.getState());
-        showBanner("🌊 You cannot place a Total Station in water! <strong>-1 Life</strong>", "error");
+        setFeedback("🌊 <strong>Bad Spot:</strong> You cannot set up a tripod in deep water! Click on dry land.", "bad");
+        showBanner("🌊 Cannot place station in water! <strong>-1 Life</strong>", "error");
         if (remLives === 0) triggerGameOver(false);
         return;
       }
     }
 
     isProcessingClick = true;
-    showBanner("📡 Setting up Total Station and scanning terrain heights...");
+    showBanner("📡 Measuring terrain heights...");
 
     const deployInfo = game.registerStationDeployment();
     updateHUD(game.getState());
@@ -293,7 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     L.marker([lat, lng], { icon: stationIcon })
       .addTo(stationLayer)
-      .bindTooltip("Total Station Setup Point");
+      .bindTooltip("Total Station");
 
     L.circle([lat, lng], {
       radius: stage.maxRange,
@@ -301,10 +311,9 @@ document.addEventListener("DOMContentLoaded", () => {
       weight: 1.2,
       dashArray: "4, 6",
       fillColor: "#ec4899",
-      fillOpacity: 0.07
+      fillOpacity: 0.06
     }).addTo(stationLayer);
 
-    // Sample 12 points along each sightline
     const SAMPLES = 12;
     const allSamplePoints = [{ lat, lng }];
 
@@ -319,19 +328,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const elevations = await fetchElevationProfile(allSamplePoints);
-    const stationElev = elevations[0] + 1.6; // +1.6m tripod height
+    const groundHeight = elevations[0];
+    const stationElev = groundHeight + 1.6;
 
-    stationCoordsEl.textContent = `${lat.toFixed(4)}°N, ${lng.toFixed(4)}°E`;
-    stationElevEl.textContent = `${elevations[0].toFixed(1)} m`;
+    stationElevEl.textContent = `${groundHeight.toFixed(1)} m`;
     stationCountEl.textContent = String(deployInfo.deployCount);
 
     currentProfiles = [];
     const visibleIds = [];
+    const blockedNames = [];
+    const farNames = [];
     const statusMap = {};
 
     stage.targets.forEach((t, tIdx) => {
       const startIdx = 1 + tIdx * SAMPLES;
-      const terrainElevs = [elevations[0], ...elevations.slice(startIdx, startIdx + SAMPLES)];
+      const terrainElevs = [groundHeight, ...elevations.slice(startIdx, startIdx + SAMPLES)];
       const targetGroundElev = targetElevations[t.id] || terrainElevs[terrainElevs.length - 1];
       terrainElevs[terrainElevs.length - 1] = targetGroundElev;
 
@@ -339,7 +350,6 @@ document.addEventListener("DOMContentLoaded", () => {
         turf.distance(turf.point([lng, lat]), turf.point([t.lng, t.lat]), { units: "meters" })
       );
 
-      // Straight laser beam from station to target prism
       const losElevs = terrainElevs.map((_, i) => {
         const frac = i / SAMPLES;
         return Math.round((stationElev + (targetGroundElev + 1.5 - stationElev) * frac) * 10) / 10;
@@ -360,9 +370,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (outOfRange) {
         lineColor = "#fbbf24";
         status = "out_of_range";
+        farNames.push(`${t.id} (${distanceMeters}m)`);
       } else if (isBlocked) {
         lineColor = "#f43f5e";
         status = "blocked";
+        blockedNames.push(t.id);
       } else {
         visibleIds.push(t.id);
       }
@@ -388,7 +400,7 @@ document.addEventListener("DOMContentLoaded", () => {
         terrainElevs,
         losElevs,
         status,
-        deltaH: (targetGroundElev - elevations[0]).toFixed(1)
+        deltaH: (targetGroundElev - groundHeight).toFixed(1)
       });
     });
 
@@ -396,25 +408,58 @@ document.addEventListener("DOMContentLoaded", () => {
     updateHUD(game.getState());
     renderTargetMarkersAndList(stage, result.readSet, statusMap);
 
+    // Build clear explanation of why this station spot is good or bad
+    buildStationExplanation(groundHeight, visibleIds, blockedNames, farNames, result);
+
     profileSelector.disabled = false;
     profileSelector.value = "0";
     drawProfileChart(currentProfiles[0]);
 
     if (result.stageCompleted) {
       const bonusMsg = result.singleStationBonus
-        ? ` 🏆 <strong>One-Setup Master (+${result.singleStationBonus} pts)!</strong>`
+        ? ` 🏆 <strong>One-Setup Bonus (+${result.singleStationBonus} pts)!</strong>`
         : "";
-      showBanner(`🎉 All targets measured in this region!${bonusMsg}`, "success");
+      showBanner(`🎉 All 3 targets measured!${bonusMsg}`, "success");
       btnNextStage.classList.remove("hidden");
     } else {
       const penaltyTxt = deployInfo.timePenalty ? ` (-${deployInfo.timePenalty}s)` : "";
-      showBanner(
-        `📡 ${visibleIds.length} visible, ${stage.targets.length - visibleIds.length} blocked/far${penaltyTxt}. Click another high spot to move the station!`
-      );
+      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Move the station to see the remaining targets!`);
     }
 
     isProcessingClick = false;
   });
+
+  function buildStationExplanation(height, visibleIds, blockedNames, farNames, result) {
+    if (result.stageCompleted && visibleIds.length === 3) {
+      setFeedback(
+        `✅ <strong>Great Spot (${Math.round(height)} m)!</strong> High and central enough to see all 3 targets with zero hills in the way.`,
+        "good"
+      );
+      return;
+    }
+
+    if (result.stageCompleted) {
+      setFeedback(
+        `✅ <strong>Region Complete!</strong> You combined multiple setups to measure all 3 targets. Click Next Region below.`,
+        "good"
+      );
+      return;
+    }
+
+    const reasons = [];
+    if (visibleIds.length > 0) {
+      reasons.push(`✅ Clear view to <b>${visibleIds.join(", ")}</b>.`);
+    }
+    if (blockedNames.length > 0) {
+      reasons.push(`❌ A hill blocks <b>${blockedNames.join(", ")}</b> because ${Math.round(height)} m is too low or behind a ridge.`);
+    }
+    if (farNames.length > 0) {
+      reasons.push(`⚠️ <b>${farNames.join(", ")}</b> is outside the pink range circle. Move closer to the center.`);
+    }
+
+    const level = visibleIds.length > 0 ? "warn" : "bad";
+    setFeedback(reasons.join(" "), level);
+  }
 
   function drawProfileChart(profile) {
     if (!profile || !elevationChart) return;
@@ -433,13 +478,13 @@ document.addEventListener("DOMContentLoaded", () => {
     elevationChart.update();
 
     if (profile.status === "visible") {
-      losStatusText.innerHTML = `✅ <strong>${profile.target.id} (${profile.target.name}):</strong> Clear view! Distance: <b>${profile.distanceMeters}m</b> | Height Diff: <b>${profile.deltaH}m</b>`;
+      losStatusText.innerHTML = `✅ <strong>${profile.target.id}:</strong> Clear laser line! Distance: <b>${profile.distanceMeters}m</b> | Diff: <b>${profile.deltaH}m</b>`;
       losStatusText.style.color = "#10b981";
     } else if (profile.status === "out_of_range") {
-      losStatusText.innerHTML = `⚠️ <strong>${profile.target.id}:</strong> Too far (${profile.distanceMeters}m). Place the station closer.`;
+      losStatusText.innerHTML = `⚠️ <strong>${profile.target.id}:</strong> Too far (${profile.distanceMeters}m). Move closer.`;
       losStatusText.style.color = "#fbbf24";
     } else {
-      losStatusText.innerHTML = `❌ <strong>${profile.target.id}:</strong> A hill blocks the laser! Move to a higher point.`;
+      losStatusText.innerHTML = `❌ <strong>${profile.target.id}:</strong> Hill blocks laser! Pick a higher spot.`;
       losStatusText.style.color = "#f43f5e";
     }
   }

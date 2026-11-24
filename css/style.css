@@ -305,6 +305,33 @@ body {
   font-weight: 700;
 }
 
+/* Simple Station Feedback Box */
+.feedback-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(19, 11, 24, 0.75);
+  border-left: 4px solid var(--accent-pink);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-main);
+}
+
+.feedback-box.good {
+  border-left-color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.feedback-box.warn {
+  border-left-color: var(--accent-amber);
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.feedback-box.bad {
+  border-left-color: var(--accent-red);
+  background: rgba(244, 63, 94, 0.12);
+}
+
 /* Target List */
 .target-list {
   list-style: none;
