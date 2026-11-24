@@ -1,8 +1,8 @@
 /**
  * js/app.js
- * Leaflet map, Stage Briefing with verified Region Photos, Web Audio SFX,
+ * Leaflet map, Stage Briefing with reliable Region Photos, Web Audio SFX,
  * Dual Cinematic Animation (Laser Prisms + Rotating 3D Elevation Mesh),
- * and Hard-Hat Engineer Victory Screen
+ * and English Hard-Hat Engineer Victory Screen
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -251,8 +251,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const state = game.getState();
     const photoEl = document.getElementById("briefing-photo");
+    let triedBackup = false;
+
     photoEl.onerror = () => {
-      photoEl.src = FALLBACK_LANDSCAPE_SVG;
+      if (!triedBackup && stage.backupPhoto) {
+        triedBackup = true;
+        photoEl.src = stage.backupPhoto;
+      } else {
+        photoEl.src = FALLBACK_LANDSCAPE_SVG;
+      }
     };
     photoEl.src = stage.photo;
 
@@ -324,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fillColor: "#ec4899",
         fillOpacity: 0.24,
         weight: 1.5
-      }).bindTooltip("💧 Crater Lake: Do Not Click Inside").addTo(boundaryLayer);
+      }).bindTooltip("💧 Crater Lake: Solid ground required for Total Station tripod").addTo(boundaryLayer);
     }
 
     map.flyTo(stage.center, stage.zoom, { duration: 1.0 });
@@ -424,8 +431,8 @@ document.addEventListener("DOMContentLoaded", () => {
       playErrorSound();
       const remLives = game.penalizeInvalidPlacement();
       updateHUD(game.getState());
-      setFeedback("❄️ <strong>FREEZING (Outside Box):</strong> Click inside the pink dashed rectangle near M1–M3!", "bad");
-      showBanner("⚠️ Stay inside the pink dashed box! <strong>-1 Life</strong>", "error");
+      setFeedback("❄️ <strong>OUTSIDE SURVEY NETWORK:</strong> A Total Station must stay inside the pink control zone near M1–M3 to maintain geometric accuracy!", "bad");
+      showBanner("⚠️ Stay inside the pink dashed survey zone! <strong>-1 Life</strong>", "error");
       if (remLives === 0) triggerGameOver(false);
       return;
     }
@@ -441,8 +448,8 @@ document.addEventListener("DOMContentLoaded", () => {
         playErrorSound();
         const remLives = game.penalizeInvalidPlacement();
         updateHUD(game.getState());
-        setFeedback("❄️ <strong>COLD (Water Hazard):</strong> You cannot set up on water! Click on the dry ridge on the east side.", "bad");
-        showBanner("🌊 Cannot place station in water! <strong>-1 Life</strong>", "error");
+        setFeedback("❄️ <strong>WATER HAZARD:</strong> You cannot mount a Total Station tripod on water! Deep water prevents stable leveling and distorts laser beams. Click on solid high rock on the east rim.", "bad");
+        showBanner("🌊 Cannot mount tripod in water! Click solid ground. <strong>-1 Life</strong>", "error");
         if (remLives === 0) triggerGameOver(false);
         return;
       }
@@ -619,7 +626,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("cinematic-title").textContent = `${stage.name} — 3D Model Ready!`;
     document.getElementById("cinematic-subtitle").textContent =
-      `Left: Laser beams locked onto the 3 reflector prisms. Right: Generated 3D elevation surface mesh:`;
+      `Left: Laser beams locked onto the 3 reflector prisms. Right: Generated 3D terrain elevation surface:`;
 
     const summaryEl = document.getElementById("cinematic-summary");
     summaryEl.innerHTML =
@@ -640,7 +647,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const h = canvas.height;
     let frame = 0;
 
-    // Left half coordinates (Laser -> 3 Reflector Prisms)
     const reflectors = [
       { id: "M1", icon: stage.targets[0].icon, elev: targetElevations["M1"] || 1210, x: 205, y: 52 },
       { id: "M2", icon: stage.targets[1].icon, elev: targetElevations["M2"] || 1195, x: 232, y: 118 },
@@ -648,7 +654,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ];
     const station = { x: 46, y: 120 };
 
-    // Normalize relative heights for 3D surface peaks
     const h0 = lastStationHeight || 1200;
     const h1 = targetElevations["M1"] || 1210;
     const h2 = targetElevations["M2"] || 1190;
@@ -659,7 +664,6 @@ document.addEventListener("DOMContentLoaded", () => {
       frame += 1;
       ctx.clearRect(0, 0, w, h);
 
-      // Subtle background grid
       ctx.strokeStyle = "rgba(236, 72, 153, 0.12)";
       ctx.lineWidth = 1;
       for (let gx = 0; gx < w; gx += 25) {
@@ -669,7 +673,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.stroke();
       }
 
-      // Vertical divider between Laser View (Left) & 3D Elevation Mesh (Right)
       ctx.strokeStyle = "rgba(244, 114, 182, 0.35)";
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
@@ -678,14 +681,11 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // ---------------------------------------------------------------------
-      // LEFT PANEL: Total Station -> Reflector Prisms Laser Measurement
-      // ---------------------------------------------------------------------
+      // LEFT PANEL: Laser -> Reflector Prisms
       ctx.fillStyle = "#f472b6";
       ctx.font = "bold 10px JetBrains Mono, monospace";
       ctx.fillText("1. LASER PRISM LOCK", 14, 18);
 
-      // Completed triangle area
       ctx.fillStyle = "rgba(16, 185, 129, 0.16)";
       ctx.strokeStyle = "#10b981";
       ctx.lineWidth = 1.4;
@@ -715,7 +715,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.stroke();
         ctx.restore();
 
-        // Moving laser pulse
         const pulseT = (frame * 0.035 + idx * 0.33) % 1;
         ctx.fillStyle = "#a7f3d0";
         ctx.beginPath();
@@ -728,7 +727,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
         ctx.fill();
 
-        // Prism tripod
         ctx.strokeStyle = "#d8b4e2";
         ctx.lineWidth = 1.6;
         ctx.beginPath();
@@ -738,7 +736,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.lineTo(ref.x + 6, ref.y + 18);
         ctx.stroke();
 
-        // Prism diamond
         ctx.fillStyle = "#10b981";
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 1.3;
@@ -756,7 +753,6 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.fillText(`${ref.id}: ${ref.elev}m`, ref.x - 28, ref.y - 11);
       });
 
-      // Total Station Tripod (Left)
       ctx.strokeStyle = "#f472b6";
       ctx.lineWidth = 2.6;
       ctx.beginPath();
@@ -785,9 +781,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.font = "bold 10px JetBrains Mono, monospace";
       ctx.fillText(`STN ${Math.round(lastStationHeight)}m`, station.x - 28, station.y + 49);
 
-      // ---------------------------------------------------------------------
-      // RIGHT PANEL: Rotating 3D Elevation Surface Mesh (3D DEM Wireframe)
-      // ---------------------------------------------------------------------
+      // RIGHT PANEL: Rotating 3D Elevation Surface Mesh
       ctx.fillStyle = "#34d399";
       ctx.font = "bold 10px JetBrains Mono, monospace";
       ctx.fillText("2. 3D ELEVATION MODEL", 282, 18);
@@ -801,7 +795,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const scale = 15;
 
       function project3D(gx, gz) {
-        // Synthetic 3D terrain surface shaped by measured station & target heights
         const nx = gx / gridN;
         const nz = gz / gridN;
         const hill1 = ((h1 - avgH) * 0.35 + 18) * Math.exp(-((nx - 0.5) ** 2 + (nz + 0.4) ** 2) * 3.2);
@@ -809,11 +802,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const stnPeak = ((h0 - avgH) * 0.4 + 22) * Math.exp(-(nx ** 2 + nz ** 2) * 2.5);
         const yElev = hill1 + hill2 + stnPeak + Math.sin(nx * 4) * 4;
 
-        // Rotate around Y axis
         const rx = gx * cosA - gz * sinA;
         const rz = gx * sinA + gz * cosA;
 
-        // Isometric projection
         const sx = cx + rx * scale;
         const sy = cy + rz * (scale * 0.52) - yElev;
         return { sx, sy, yElev };
@@ -829,7 +820,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      // Draw 3D wireframe grid lines with elevation color gradient
       for (let i = 0; i < gridN; i++) {
         for (let j = 0; j < gridN; j++) {
           const p1 = pts[i][j];
@@ -853,7 +843,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      // 3D Elevation Peak Pin on Center
       const peakPt = pts[gridN / 2][gridN / 2];
       ctx.fillStyle = "#fde047";
       ctx.beginPath();
@@ -884,7 +873,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function buildHotColdCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
     if (result.stageCompleted) {
       setFeedback(
-        `🔥 <strong>BULLSEYE! Region Complete (${Math.round(height)} m):</strong> All 3 reflector prisms locked!`,
+        `🔥 <strong>BULLSEYE! High Ground Advantage (${Math.round(height)} m):</strong> Elevated station cleared every ridge and locked all 3 reflector prisms!`,
         "good"
       );
       return;
@@ -897,21 +886,21 @@ document.addEventListener("DOMContentLoaded", () => {
       tempBadge = "🔥 <strong>VERY HOT (2/3 Visible):</strong> Almost there! Just 1 target left.";
       level = "good";
     } else if (visibleIds.length === 1) {
-      tempBadge = "🌤️ <strong>WARM (1/3 Visible):</strong> Good start! Move slightly higher to catch the rest.";
+      tempBadge = "🌤️ <strong>WARM (1/3 Visible):</strong> Good start! Move to a higher bench to clear the remaining ridge.";
       level = "warn";
     } else {
-      tempBadge = "❄️ <strong>COLD (0/3 Visible):</strong> You are in a low dip behind a hill.";
+      tempBadge = "❄️ <strong>COLD (0/3 Visible):</strong> Station is too low—surrounding hills block the straight laser beam.";
       level = "bad";
     }
 
     let advice = "";
     if (farDetails.length > 0) {
       const f = farDetails[0];
-      advice = `📏 <b>Rule:</b> <b>${f.id}</b> is too far (${f.dist}m). Move <b>${f.dir}</b> toward the middle of the targets.`;
+      advice = `📏 <b>Optical Range:</b> <b>${f.id}</b> is ${f.dist}m away (beyond max laser range). Move <b>${f.dir}</b> toward the center.`;
     } else if (blockedDetails.length > 0) {
       const b = blockedDetails[0];
       const recommendedHeight = Math.round(highestObstacle + 10);
-      advice = `⛰️ <b>Rule:</b> A <b>${b.ridgeHeight} m</b> hill blocks <b>${b.id}</b>. Move your cursor to find a hill higher than <b>${recommendedHeight} m</b> toward the <b>${b.dir}</b>!`;
+      advice = `⛰️ <b>Line-of-Sight Blocked:</b> A <b>${b.ridgeHeight} m</b> ridge sits between your station and <b>${b.id}</b>. Move to ground above <b>${recommendedHeight} m</b> toward the <b>${b.dir}</b>!`;
     }
 
     setFeedback(`${tempBadge}<br>${advice}`, level);
@@ -946,9 +935,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =========================================================================
-  // EVENT HANDLER 2: Target Profile Dropdown Selector
-  // =========================================================================
   profileSelector.addEventListener("change", (e) => {
     const idx = Number(e.target.value);
     if (currentProfiles[idx]) {
@@ -956,9 +942,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // =========================================================================
-  // EVENT HANDLER 3: Map Base Layer Switcher (Topo Map / Satellite)
-  // =========================================================================
   const btnTopo = document.getElementById("btn-layer-topo");
   const btnSat = document.getElementById("btn-layer-sat");
 
@@ -1024,7 +1007,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (isVictory) {
       document.getElementById("gameover-badge").textContent = "ALL 6 REGIONS COMPLETE • MASTER SURVEYOR";
-      document.getElementById("gameover-title").textContent = "Sen harika bir haritacısın! 🎉";
+      document.getElementById("gameover-title").textContent = "You are an amazing surveyor! 🎉";
       engineerStageEl.classList.remove("hidden");
       inviteNoteEl.classList.remove("hidden");
       btnRetryStage.classList.add("hidden");
