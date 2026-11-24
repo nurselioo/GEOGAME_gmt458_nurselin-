@@ -29,6 +29,9 @@
     </div>
 
     <div class="hud-metrics">
+      <button id="btn-sound-toggle" class="sound-toggle-btn" title="Toggle Sound Effects">
+        🔊 Sound
+      </button>
       <div class="metric-box">
         <span class="metric-label">STAGE</span>
         <span id="hud-stage" class="metric-value">1 / 6</span>
@@ -77,7 +80,7 @@
           Click inside the pink box on high ground to place your <strong>Total Station</strong>!
         </div>
         <button id="btn-next-stage" class="primary-btn next-stage-floating hidden">
-          Next Region (+20 sec Bonus) ➔
+          View Survey Result & Next Region ➔
         </button>
       </div>
     </section>
@@ -161,10 +164,10 @@
       <div class="modal-badge">GMT 458 • WEB GIS GEOGAME</div>
       <h2>TOPO-RUSH: Elevation Hunter</h2>
       <p class="modal-desc">
-        Place a <strong>Total Station</strong> inside the pink study box across <strong>6 regions of Turkey</strong> to measure <strong>3 target points</strong> in each stage!
+        Place a <strong>Total Station</strong> inside the pink study box across <strong>6 regions of Turkey</strong> to measure <strong>3 reflector targets</strong> in each stage!
       </p>
       <ul class="rules-list">
-        <li>🏔️ <strong>Find High Ground:</strong> Check the Briefing Guide before each region to see where to set up your station.</li>
+        <li>🏔️ <strong>Find High Ground:</strong> Check the Region Photo & Briefing Guide before each stage to see where to set up your station.</li>
         <li>🔥 <strong>Follow the Coach:</strong> After each click, the Station Coach tells you if you are <strong>Warm or Cold</strong> and which height you need!</li>
         <li>⏱️ <strong>Beat the Clock:</strong> You start with <strong>90 seconds</strong>. Moving the station costs <strong>-3s</strong>. Finishing a region gives <strong>+20s</strong>.</li>
         <li>♥ <strong>Stay Safe:</strong> Clicking inside water or outside the pink dashed box costs <strong>1 Life</strong>.</li>
@@ -173,10 +176,14 @@
     </div>
   </div>
 
-  <!-- STAGE BRIEFING MODAL (SHOWN BEFORE EACH STAGE) -->
+  <!-- STAGE BRIEFING MODAL WITH REGION PHOTO -->
   <div id="briefing-modal" class="modal-backdrop hidden">
     <div class="modal-content briefing-card">
-      <div id="briefing-badge" class="modal-badge">STAGE 1 / 6 • EASY</div>
+      <div class="region-photo-frame">
+        <img id="briefing-photo" src="" alt="Region Landscape" />
+        <div id="briefing-badge" class="photo-badge">STAGE 1 / 6 • EASY</div>
+      </div>
+
       <h2 id="briefing-title">Region 1: Cappadocia</h2>
       <p id="briefing-desc" class="modal-desc">
         There are 3 targets in this area. Read their terrain features below:
@@ -189,6 +196,28 @@
         <p id="briefing-strategy">Click on a high hill between the targets.</p>
       </div>
       <button id="btn-close-briefing" class="primary-btn large">Got It, Place Station! 📍</button>
+    </div>
+  </div>
+
+  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (ANIMATED SURVEY RESULT) -->
+  <div id="stage-complete-modal" class="modal-backdrop hidden">
+    <div class="modal-content cinematic-card">
+      <div class="modal-badge">✅ TOPOGRAPHIC SURVEY COMPLETE</div>
+      <h2 id="cinematic-title">Region 1 Mapped Successfully!</h2>
+      <p class="modal-desc" id="cinematic-subtitle">
+        Your Total Station locked lasers onto all 3 reflector prisms and generated the elevation network:
+      </p>
+
+      <!-- Animated Canvas: Total Station Firing Laser Beams to 3 Reflector Prisms + 3D Terrain Mesh -->
+      <div class="cinematic-stage-box">
+        <canvas id="surveyCinematicCanvas" width="460" height="215"></canvas>
+      </div>
+
+      <div id="cinematic-summary" class="cinematic-summary-bar">
+        <!-- Filled dynamically with measured heights & bonus -->
+      </div>
+
+      <button id="btn-continue-next" class="primary-btn large">Continue to Next Region (+20s) ➔</button>
     </div>
   </div>
 

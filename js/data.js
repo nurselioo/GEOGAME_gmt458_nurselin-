@@ -1,6 +1,6 @@
 /**
  * js/data.js
- * 6 Study regions in Turkey with clear stage briefings, terrain icons, and elevation lookup
+ * 6 Study regions in Turkey with landscape photography, stage briefings, and elevation lookup
  */
 
 const GAME_STAGES = [
@@ -8,11 +8,12 @@ const GAME_STAGES = [
     id: 1,
     name: "Region 1: Cappadocia – Goreme Valley",
     difficulty: "Easy",
+    photo: "https://images.unsplash.com/photo-1641128324972-af3212f0f6bd?auto=format&fit=crop&w=900&q=80",
     center: [38.6455, 34.8325],
     zoom: 14,
     maxRange: 3800,
     bounds: { minLat: 38.625, maxLat: 38.665, minLng: 34.805, maxLng: 34.858 },
-    briefingIntro: "Welcome to Goreme! There are 3 targets placed across the valley and ridge:",
+    briefingIntro: "Welcome to Goreme! There are 3 reflector targets placed across the valley and ridge:",
     strategyTip: "Click on a high hill in the center-north (around 1220 m or higher) between M1, M2, and M3 so your laser clears the valley floor.",
     hint: "Pick a high spot in the center-north (>1220 m) between the 3 targets.",
     targets: [
@@ -25,12 +26,13 @@ const GAME_STAGES = [
     id: 2,
     name: "Region 2: Salt Lake Basin – Aksaray Plain",
     difficulty: "Easy",
+    photo: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
     center: [38.3950, 33.9950],
     zoom: 14,
     maxRange: 4000,
     bounds: { minLat: 38.375, maxLat: 38.415, minLng: 33.968, maxLng: 34.022 },
     briefingIntro: "This wide open basin near Tuz Golu has gentle hills and flat plains:",
-    strategyTip: "Click right in the middle of the triangle formed by M1, M2, and M3. Almost any high point above 1190 m can see all 3 targets at once!",
+    strategyTip: "Click right in the middle of the triangle formed by M1, M2, and M3. Any high point above 1190 m can see all 3 targets at once!",
     hint: "Stand right in the center between M1, M2, and M3 for an easy 3/3 shot!",
     targets: [
       { id: "M1", icon: "🌾", type: "Plain", name: "North Steppe Bench", desc: "Flat open field in the north", lat: 38.4030, lng: 33.9920 },
@@ -42,6 +44,7 @@ const GAME_STAGES = [
     id: 3,
     name: "Region 3: Uludag – Mountain Ridge",
     difficulty: "Medium",
+    photo: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80",
     center: [40.1045, 29.1330],
     zoom: 14,
     maxRange: 3800,
@@ -59,6 +62,7 @@ const GAME_STAGES = [
     id: 4,
     name: "Region 4: Pamukkale – Travertine Terraces",
     difficulty: "Medium",
+    photo: "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=900&q=80",
     center: [37.9240, 29.1230],
     zoom: 14,
     maxRange: 3800,
@@ -76,6 +80,7 @@ const GAME_STAGES = [
     id: 5,
     name: "Region 5: Kackar – Ayder Highland",
     difficulty: "Hard",
+    photo: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
     center: [40.9525, 41.1050],
     zoom: 14,
     maxRange: 3600,
@@ -93,6 +98,7 @@ const GAME_STAGES = [
     id: 6,
     name: "Region 6: Nemrut Caldera – Bitlis",
     difficulty: "Expert",
+    photo: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=80",
     center: [38.6200, 42.2420],
     zoom: 13,
     maxRange: 4200,

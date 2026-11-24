@@ -1,13 +1,91 @@
 /**
  * js/app.js
- * Leaflet map, Stage Briefing modal, custom SVG Total Station icon,
- * large terrain target markers, Hot/Cold Surveyor Coach, and Event Handlers
+ * Leaflet map, Stage Briefing with Region Photos, Web Audio Sound Effects,
+ * Cinematic Survey Completion Animation (Total Station + Reflector Prisms),
+ * and Event Handlers
  */
 
 document.addEventListener("DOMContentLoaded", () => {
   const game = createGameEngine(GAME_STAGES);
 
-  // DOM References
+  // =========================================================================
+  // SOUND EFFECTS ENGINE (Web Audio API - Zero external audio files needed)
+  // =========================================================================
+  let soundEnabled = true;
+  let audioCtx = null;
+
+  function ensureAudio() {
+    if (!soundEnabled) return null;
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) audioCtx = new AudioContext();
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    return audioCtx;
+  }
+
+  function playTone(freq, duration, type = "sine", delay = 0, vol = 0.12) {
+    const ctx = ensureAudio();
+    if (!ctx) return;
+    const now = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, now);
+    gain.gain.setValueAtTime(vol, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + duration);
+  }
+
+  // Short Total Station tripod lock + laser pulse sound
+  function playDeploySound() {
+    playTone(220, 0.08, "triangle", 0, 0.14);
+    playTone(880, 0.12, "sine", 0.07, 0.10);
+    playTone(1320, 0.14, "sine", 0.15, 0.09);
+  }
+
+  // Target measured chime
+  function playTargetSuccessSound() {
+    playTone(587.33, 0.12, "sine", 0, 0.12);     // D5
+    playTone(880, 0.22, "sine", 0.1, 0.14);      // A5
+  }
+
+  // Error / Water hazard buzz
+  function playErrorSound() {
+    playTone(170, 0.18, "sawtooth", 0, 0.12);
+    playTone(130, 0.24, "sawtooth", 0.14, 0.12);
+  }
+
+  // Stage completion fanfare
+  function playStageCompleteSound() {
+    playTone(523.25, 0.14, "triangle", 0, 0.14);    // C5
+    playTone(659.25, 0.14, "triangle", 0.12, 0.14); // E5
+    playTone(783.99, 0.16, "triangle", 0.24, 0.14); // G5
+    playTone(1046.5, 0.38, "triangle", 0.36, 0.16); // C6
+  }
+
+  // Sound toggle button in Top HUD
+  const btnSoundToggle = document.getElementById("btn-sound-toggle");
+  btnSoundToggle.addEventListener("click", () => {
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+      btnSoundToggle.textContent = "🔊 Sound";
+      btnSoundToggle.classList.remove("muted");
+      playDeploySound();
+    } else {
+      btnSoundToggle.textContent = "🔇 Muted";
+      btnSoundToggle.classList.add("muted");
+    }
+  });
+
+  // =========================================================================
+  // DOM REFERENCES
+  // =========================================================================
   const hudStage = document.getElementById("hud-stage");
   const hudTimer = document.getElementById("hud-timer");
   const timerBox = document.getElementById("timer-box");
@@ -30,10 +108,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const startModal = document.getElementById("start-modal");
   const briefingModal = document.getElementById("briefing-modal");
+  const stageCompleteModal = document.getElementById("stage-complete-modal");
   const gameoverModal = document.getElementById("gameover-modal");
   const btnRetryStage = document.getElementById("btn-retry-stage");
 
-  // Clean SVG Total Station Marker (no persistent white text box)
+  // Clean SVG Total Station Marker
   const TOTAL_STATION_MARKER_HTML = `
     <div class="station-marker-svg-wrap" style="width:42px;height:42px;">
       <svg viewBox="0 0 64 64" width="30" height="30" aria-label="Total Station">
@@ -68,8 +147,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let currentProfiles = [];
   let targetElevations = {};
+  let lastStationCoords = null;
+  let lastStationHeight = 1200;
   let elevationChart = null;
   let isProcessingClick = false;
+  let cinematicAnimId = null;
 
   function initChart() {
     const ctx = document.getElementById("elevationChart").getContext("2d");
@@ -153,11 +235,35 @@ document.addEventListener("DOMContentLoaded", () => {
     hudHighscore.textContent = state.highScore;
   }
 
-  // Show Stage Briefing Guide Modal before starting each region
+  // Fallback SVG landscape if offline
+  const FALLBACK_LANDSCAPE_SVG =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3b1d54"/>
+            <stop offset="100%" stop-color="#ec4899"/>
+          </linearGradient>
+        </defs>
+        <rect width="800" height="300" fill="url(#sky)"/>
+        <polygon points="0,300 180,110 380,300" fill="#281733"/>
+        <polygon points="240,300 480,85 740,300" fill="#1b1022"/>
+        <polygon points="520,300 690,140 800,240 800,300" fill="#321942"/>
+      </svg>`
+    );
+
+  // Show Stage Briefing Guide Modal with Region Photo
   function openStageBriefing(stage) {
-    game.pauseTimer(); // Pause clock while player reads the stage guide
+    game.pauseTimer();
 
     const state = game.getState();
+    const photoEl = document.getElementById("briefing-photo");
+    photoEl.onerror = () => {
+      photoEl.src = FALLBACK_LANDSCAPE_SVG;
+    };
+    photoEl.src = stage.photo;
+
     document.getElementById("briefing-badge").textContent = `STAGE ${state.stageNumber} / ${state.totalStages} • ${stage.difficulty.toUpperCase()}`;
     document.getElementById("briefing-title").textContent = stage.name;
     document.getElementById("briefing-desc").textContent = stage.briefingIntro;
@@ -197,6 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
     boundaryLayer.clearLayers();
     currentProfiles = [];
     targetElevations = {};
+    lastStationCoords = null;
 
     regionTitle.textContent = `${stage.name} (${stage.difficulty})`;
     stationElevEl.textContent = "-- m";
@@ -208,7 +315,6 @@ document.addEventListener("DOMContentLoaded", () => {
     losStatusText.style.color = "#d8b4e2";
     setFeedback(`💡 <strong>Strategy:</strong> ${stage.hint}`, "info");
 
-    // Clean Pink Dashed Study Area Box (No confusing extra circle)
     const rectBounds = [
       [stage.bounds.minLat, stage.bounds.minLng],
       [stage.bounds.maxLat, stage.bounds.maxLng]
@@ -307,7 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // EVENT HANDLER 1: Map Click to Place Total Station & Hot/Cold Guidance
+  // EVENT HANDLER 1: Map Click to Place Total Station
   // =========================================================================
   map.on("click", async (e) => {
     const state = game.getState();
@@ -324,6 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
       lng <= stage.bounds.maxLng;
 
     if (!inBounds) {
+      playErrorSound();
       const remLives = game.penalizeInvalidPlacement();
       updateHUD(game.getState());
       setFeedback("❄️ <strong>FREEZING (Outside Box):</strong> Click inside the pink dashed rectangle near M1–M3!", "bad");
@@ -340,6 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
         { units: "meters" }
       );
       if (distToLake <= stage.waterZone.radius) {
+        playErrorSound();
         const remLives = game.penalizeInvalidPlacement();
         updateHUD(game.getState());
         setFeedback("❄️ <strong>COLD (Water Hazard):</strong> You cannot set up on water! Click on the dry ridge on the east side.", "bad");
@@ -350,13 +458,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     isProcessingClick = true;
-    showBanner("📡 Measuring terrain heights...");
+    playDeploySound();
+    showBanner("📡 Total Station locked! Firing laser beams...");
 
     const deployInfo = game.registerStationDeployment();
     updateHUD(game.getState());
 
     stationLayer.clearLayers();
     sightLinesLayer.clearLayers();
+
+    lastStationCoords = [lat, lng];
 
     const stationIcon = L.divIcon({
       className: "",
@@ -365,7 +476,6 @@ document.addEventListener("DOMContentLoaded", () => {
       iconAnchor: [21, 21]
     });
 
-    // Clean marker without persistent popup label
     L.marker([lat, lng], { icon: stationIcon }).addTo(stationLayer);
 
     const SAMPLES = 12;
@@ -383,7 +493,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const elevations = await fetchElevationProfile(allSamplePoints);
     const groundHeight = elevations[0];
-    const stationElev = groundHeight + 2.0; // Tripod + instrument height
+    lastStationHeight = groundHeight;
+    const stationElev = groundHeight + 2.0;
 
     stationElevEl.textContent = `${groundHeight.toFixed(1)} m`;
     stationCountEl.textContent = String(deployInfo.deployCount);
@@ -476,12 +587,34 @@ document.addEventListener("DOMContentLoaded", () => {
     drawProfileChart(currentProfiles[0]);
 
     if (result.stageCompleted) {
+      playStageCompleteSound();
+
+      // Highlight completed TIN survey triangle on the map
+      const triangleCoords = stage.targets.map((t) => [t.lat, t.lng]);
+      L.polygon(triangleCoords, {
+        color: "#10b981",
+        weight: 2,
+        fillColor: "#10b981",
+        fillOpacity: 0.16
+      }).addTo(sightLinesLayer);
+
+      // Smoothly zoom in to the completed survey site
+      if (lastStationCoords) {
+        map.flyTo(lastStationCoords, stage.zoom + 1, { duration: 1.1 });
+      }
+
       const bonusMsg = result.singleStationBonus
         ? ` 🏆 <strong>One-Setup Bonus (+${result.singleStationBonus} pts)!</strong>`
         : "";
       showBanner(`🎉 All 3 targets measured!${bonusMsg}`, "success");
       btnNextStage.classList.remove("hidden");
+
+      // Launch the animated Total Station -> Reflector Laser Visualization after a brief map zoom
+      setTimeout(() => {
+        openCinematicSurveyModal(stage, result.singleStationBonus);
+      }, 1150);
     } else {
+      if (result.newlyReadCount > 0) playTargetSuccessSound();
       const penaltyTxt = deployInfo.timePenalty ? ` (-${deployInfo.timePenalty}s)` : "";
       showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Check the Station Coach advice on the right!`);
     }
@@ -489,10 +622,185 @@ document.addEventListener("DOMContentLoaded", () => {
     isProcessingClick = false;
   });
 
+  // =========================================================================
+  // CINEMATIC STAGE COMPLETION VISUALIZATION (Total Station + 3 Reflectors)
+  // =========================================================================
+  function openCinematicSurveyModal(stage, singleBonus) {
+    game.pauseTimer();
+
+    document.getElementById("cinematic-title").textContent = `${stage.name} — Mapped!`;
+    document.getElementById("cinematic-subtitle").textContent =
+      `Station set at ${lastStationHeight.toFixed(1)} m fired laser pulses to all 3 reflector prisms and computed their exact elevations:`;
+
+    const summaryEl = document.getElementById("cinematic-summary");
+    summaryEl.innerHTML = stage.targets
+      .map((t) => `<span>${t.icon} <strong>${t.id}:</strong> ${targetElevations[t.id]} m</span>`)
+      .join("") + (singleBonus ? `<span style="color:#34d399;font-weight:700;">🏆 +${singleBonus} Bonus</span>` : "");
+
+    stageCompleteModal.classList.remove("hidden");
+    startSurveyCanvasAnimation(stage);
+  }
+
+  function startSurveyCanvasAnimation(stage) {
+    if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
+    const canvas = document.getElementById("surveyCinematicCanvas");
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    let frame = 0;
+
+    const reflectors = [
+      { id: "M1", icon: stage.targets[0].icon, elev: targetElevations["M1"] || 1210, x: 365, y: 52 },
+      { id: "M2", icon: stage.targets[1].icon, elev: targetElevations["M2"] || 1195, x: 405, y: 118 },
+      { id: "M3", icon: stage.targets[2].icon, elev: targetElevations["M3"] || 1205, x: 350, y: 175 }
+    ];
+
+    const station = { x: 85, y: 120 };
+
+    function render() {
+      frame += 1;
+      ctx.clearRect(0, 0, w, h);
+
+      // Background grid (topographic wireframe feel)
+      ctx.strokeStyle = "rgba(236, 72, 153, 0.14)";
+      ctx.lineWidth = 1;
+      for (let gx = 0; gx < w; gx += 28) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, h);
+        ctx.stroke();
+      }
+      for (let gy = 0; gy < h; gy += 28) {
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(w, gy);
+        ctx.stroke();
+      }
+
+      // Draw completed TIN Survey Network Triangle between reflectors
+      const pulseAlpha = 0.14 + Math.sin(frame * 0.06) * 0.06;
+      ctx.fillStyle = `rgba(16, 185, 129, ${pulseAlpha})`;
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(reflectors[0].x, reflectors[0].y);
+      ctx.lineTo(reflectors[1].x, reflectors[1].y);
+      ctx.lineTo(reflectors[2].x, reflectors[2].y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Animated Laser Beams from Total Station to each Reflector Prism
+      reflectors.forEach((ref, idx) => {
+        const progress = Math.min(1, Math.max(0, (frame - idx * 14) / 28));
+        const curX = station.x + (ref.x - station.x) * progress;
+        const curY = station.y + (ref.y - station.y) * progress;
+
+        // Glowing Laser Beam
+        ctx.save();
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = "#10b981";
+        ctx.shadowBlur = 10;
+        ctx.setLineDash([7, 5]);
+        ctx.lineDashOffset = -frame * 1.4;
+        ctx.beginPath();
+        ctx.moveTo(station.x, station.y - 6);
+        ctx.lineTo(curX, curY);
+        ctx.stroke();
+        ctx.restore();
+
+        // Moving Laser Pulse Dot
+        const pulseT = ((frame * 0.03 + idx * 0.33) % 1);
+        const dotX = station.x + (ref.x - station.x) * pulseT;
+        const dotY = (station.y - 6) + (ref.y - (station.y - 6)) * pulseT;
+        ctx.fillStyle = "#a7f3d0";
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Reflector Prism on Tripod at target
+        ctx.strokeStyle = "#d8b4e2";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(ref.x, ref.y + 4);
+        ctx.lineTo(ref.x - 8, ref.y + 22);
+        ctx.moveTo(ref.x, ref.y + 4);
+        ctx.lineTo(ref.x + 8, ref.y + 22);
+        ctx.stroke();
+
+        // Orange/Pink Surveying Reflector Prism Diamond
+        ctx.fillStyle = progress >= 1 ? "#10b981" : "#f472b6";
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(ref.x, ref.y - 8);
+        ctx.lineTo(ref.x + 8, ref.y);
+        ctx.lineTo(ref.x, ref.y + 8);
+        ctx.lineTo(ref.x - 8, ref.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Target Label & Elevation
+        ctx.fillStyle = "#fdf2f8";
+        ctx.font = "bold 11px Inter, sans-serif";
+        ctx.fillText(`${ref.icon} ${ref.id}: ${ref.elev}m`, ref.x - 36, ref.y - 14);
+      });
+
+      // Draw Total Station Instrument on Tripod (Left)
+      ctx.strokeStyle = "#f472b6";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(station.x, station.y + 6);
+      ctx.lineTo(station.x - 16, station.y + 38);
+      ctx.moveTo(station.x, station.y + 6);
+      ctx.lineTo(station.x + 16, station.y + 38);
+      ctx.moveTo(station.x, station.y + 6);
+      ctx.lineTo(station.x, station.y + 40);
+      ctx.stroke();
+
+      // Instrument Head
+      ctx.fillStyle = "#ec4899";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(station.x - 13, station.y - 16, 26, 20, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      // Telescope Lens
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.arc(station.x + 5, station.y - 6, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#f472b6";
+      ctx.font = "bold 11px JetBrains Mono, monospace";
+      ctx.fillText(`STATION (${Math.round(lastStationHeight)}m)`, station.x - 45, station.y + 54);
+
+      cinematicAnimId = requestAnimationFrame(render);
+    }
+
+    render();
+  }
+
+  document.getElementById("btn-continue-next").addEventListener("click", () => {
+    if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
+    stageCompleteModal.classList.add("hidden");
+    const res = game.advanceToNextStage();
+    updateHUD(game.getState());
+    if (res.gameFinished) {
+      triggerGameOver(true, res.timeBonus);
+    } else {
+      loadStage(game.getCurrentStage(), true);
+    }
+  });
+
   function buildHotColdCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
     if (result.stageCompleted) {
       setFeedback(
-        `🔥 <strong>BULLSEYE! Region Complete (${Math.round(height)} m):</strong> Great job! Click the glowing <b>Next Region</b> button on the map.`,
+        `🔥 <strong>BULLSEYE! Region Complete (${Math.round(height)} m):</strong> All 3 reflector prisms locked!`,
         "good"
       );
       return;
@@ -588,8 +896,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Start, Retry Current Stage, Restart & Next Stage Buttons
+  // Start, Retry Current Stage, Restart & Floating Next Stage Buttons
   document.getElementById("btn-start-game").addEventListener("click", () => {
+    ensureAudio();
     startModal.classList.add("hidden");
     startSession();
   });
@@ -610,13 +919,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   btnNextStage.addEventListener("click", () => {
-    const res = game.advanceToNextStage();
-    updateHUD(game.getState());
-    if (res.gameFinished) {
-      triggerGameOver(true, res.timeBonus);
-    } else {
-      loadStage(game.getCurrentStage(), true);
-    }
+    openCinematicSurveyModal(game.getCurrentStage(), 0);
   });
 
   function startSession() {
@@ -629,6 +932,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function triggerGameOver(isVictory, timeBonus = 0) {
+    if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
+    stageCompleteModal.classList.add("hidden");
+
     const finalState = game.getState();
     document.getElementById("gameover-badge").textContent = isVictory
       ? "ALL 6 REGIONS COMPLETE"
@@ -642,7 +948,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("final-targets").textContent = `${finalState.totalTargetsRead} / ${GAME_STAGES.length * 3}`;
     document.getElementById("final-time-bonus").textContent = `+${timeBonus}`;
 
-    // Show "Retry This Stage" only if the player lost mid-game
     if (isVictory) {
       btnRetryStage.classList.add("hidden");
     } else {
