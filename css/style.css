@@ -1,15 +1,16 @@
 :root {
-  --bg-dark: #0b1120;
-  --bg-panel: #111827;
-  --bg-card: #1e293b;
-  --border-color: #334155;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --bg-dark: #130b18;
+  --bg-panel: #1b1022;
+  --bg-card: #281733;
+  --border-color: #462759;
+  --text-main: #fdf2f8;
+  --text-muted: #d8b4e2;
+  --accent-pink: #ec4899;
+  --accent-pink-light: #f472b6;
+  --accent-pink-glow: rgba(236, 72, 153, 0.4);
   --accent-green: #10b981;
-  --accent-green-glow: rgba(16, 185, 129, 0.35);
-  --accent-red: #ef4444;
-  --accent-amber: #f59e0b;
-  --accent-blue: #38bdf8;
+  --accent-red: #f43f5e;
+  --accent-amber: #fbbf24;
 }
 
 * {
@@ -37,7 +38,7 @@ body {
   color: var(--text-muted);
 }
 
-/* --- ÜST HUD ÇUBUĞU --- */
+/* --- TOP HUD BAR --- */
 .hud-bar {
   height: 68px;
   background: var(--bg-panel);
@@ -57,8 +58,8 @@ body {
 
 .brand-icon {
   font-size: 1.8rem;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(236, 72, 153, 0.15);
+  border: 1px solid rgba(244, 114, 182, 0.4);
   padding: 6px 10px;
   border-radius: 10px;
 }
@@ -67,7 +68,7 @@ body {
   font-size: 1.2rem;
   letter-spacing: 1px;
   font-weight: 700;
-  color: var(--accent-blue);
+  color: var(--accent-pink-light);
 }
 
 .brand .subtitle {
@@ -92,8 +93,8 @@ body {
 }
 
 .metric-box.highlight {
-  border-color: var(--accent-green);
-  box-shadow: 0 0 12px var(--accent-green-glow);
+  border-color: var(--accent-pink);
+  box-shadow: 0 0 14px var(--accent-pink-glow);
 }
 
 .metric-label {
@@ -110,11 +111,11 @@ body {
 }
 
 .hearts {
-  color: var(--accent-red);
+  color: var(--accent-pink);
   letter-spacing: 2px;
 }
 
-/* Süre Kritik Uyarı Animasyonu */
+/* Low Time Warning Animation */
 .timer-danger {
   border-color: var(--accent-red) !important;
   animation: pulseDanger 0.8s infinite alternate;
@@ -125,11 +126,11 @@ body {
 }
 
 @keyframes pulseDanger {
-  from { box-shadow: 0 0 4px rgba(239, 68, 68, 0.3); }
-  to { box-shadow: 0 0 16px rgba(239, 68, 68, 0.85); }
+  from { box-shadow: 0 0 4px rgba(244, 63, 94, 0.3); }
+  to { box-shadow: 0 0 18px rgba(244, 63, 94, 0.9); }
 }
 
-/* --- ANA GRID YERLEŞİMİ --- */
+/* --- MAIN GRID LAYOUT --- */
 .game-container {
   flex: 1;
   display: grid;
@@ -137,7 +138,7 @@ body {
   height: calc(100vh - 68px);
 }
 
-/* --- HARİTA ALANI --- */
+/* --- MAP AREA --- */
 .map-wrapper {
   position: relative;
   width: 100%;
@@ -147,7 +148,7 @@ body {
 #map {
   width: 100%;
   height: 100%;
-  background: #0f172a;
+  background: #1a0f22;
   cursor: crosshair;
 }
 
@@ -165,7 +166,7 @@ body {
 
 .region-badge {
   pointer-events: auto;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(27, 16, 34, 0.92);
   backdrop-filter: blur(8px);
   border: 1px solid var(--border-color);
   padding: 8px 16px;
@@ -175,27 +176,27 @@ body {
   gap: 10px;
   font-weight: 600;
   font-size: 0.9rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45);
 }
 
 .pulse-dot {
   width: 10px;
   height: 10px;
-  background: var(--accent-green);
+  background: var(--accent-pink);
   border-radius: 50%;
   animation: dotPulse 1.5s infinite;
 }
 
 @keyframes dotPulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.8); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(236, 72, 153, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
 }
 
 .map-controls {
   pointer-events: auto;
   display: flex;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(27, 16, 34, 0.92);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   overflow: hidden;
@@ -213,8 +214,8 @@ body {
 }
 
 .layer-btn.active {
-  background: var(--accent-blue);
-  color: #0f172a;
+  background: var(--accent-pink);
+  color: #fff;
 }
 
 .toast-banner {
@@ -223,19 +224,19 @@ body {
   left: 50%;
   transform: translateX(-50%);
   z-index: 900;
-  background: rgba(15, 23, 42, 0.92);
-  border: 1px solid var(--accent-blue);
+  background: rgba(27, 16, 34, 0.94);
+  border: 1px solid var(--accent-pink);
   padding: 10px 20px;
   border-radius: 10px;
   font-size: 0.88rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
   transition: all 0.3s ease;
   white-space: nowrap;
 }
 
 .toast-banner.error {
   border-color: var(--accent-red);
-  color: #fecaca;
+  color: #fecdd3;
 }
 
 .toast-banner.success {
@@ -243,7 +244,7 @@ body {
   color: #a7f3d0;
 }
 
-/* --- SAĞ PANEL --- */
+/* --- SIDE PANEL --- */
 .side-panel {
   background: var(--bg-panel);
   border-left: 1px solid var(--border-color);
@@ -271,14 +272,14 @@ body {
 .card-header h2 {
   font-size: 0.82rem;
   letter-spacing: 0.6px;
-  color: var(--text-muted);
+  color: var(--accent-pink-light);
 }
 
 .station-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(19, 11, 24, 0.6);
   padding: 10px;
   border-radius: 8px;
 }
@@ -292,19 +293,19 @@ body {
 
 .station-stats strong {
   font-size: 0.95rem;
-  color: var(--accent-blue);
+  color: var(--accent-pink-light);
 }
 
 .badge-pill {
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--accent-blue);
+  background: rgba(236, 72, 153, 0.2);
+  color: var(--accent-pink-light);
   padding: 2px 10px;
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 700;
 }
 
-/* Hedef Noktalar Listesi */
+/* Target List */
 .target-list {
   list-style: none;
   display: flex;
@@ -313,7 +314,7 @@ body {
 }
 
 .target-item {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(19, 11, 24, 0.65);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 9px 12px;
@@ -327,7 +328,7 @@ body {
 
 .target-item:hover {
   transform: translateX(3px);
-  border-color: var(--accent-blue);
+  border-color: var(--accent-pink);
 }
 
 .target-item.visible-ok {
@@ -338,7 +339,7 @@ body {
   border-left: 4px solid var(--accent-red);
 }
 
-/* Grafik Alanı */
+/* Chart Area */
 .chart-container {
   position: relative;
   height: 175px;
@@ -361,9 +362,9 @@ body {
   line-height: 1.4;
 }
 
-/* Butonlar */
+/* Buttons */
 .primary-btn {
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #ec4899, #db2777);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -372,12 +373,12 @@ body {
   font-size: 0.92rem;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 4px 14px var(--accent-green-glow);
+  box-shadow: 0 4px 14px var(--accent-pink-glow);
 }
 
 .primary-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 6px 22px rgba(236, 72, 153, 0.65);
 }
 
 .primary-btn.large {
@@ -391,32 +392,32 @@ body {
   display: none !important;
 }
 
-/* --- ÖZEL HARİTA İKONLARI & LAZER ANİMASYONLARI --- */
+/* --- CUSTOM MAP MARKERS & LASER ANIMATIONS --- */
 .station-marker-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0ea5e9;
+  background: #ec4899;
   color: #fff;
   border: 2px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+  box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.8);
   animation: radarWave 1.8s infinite;
   font-size: 16px;
 }
 
 @keyframes radarWave {
-  0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.75); }
-  70% { box-shadow: 0 0 0 18px rgba(14, 165, 233, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.85); }
+  70% { box-shadow: 0 0 0 18px rgba(236, 72, 153, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
 }
 
 .target-marker-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f59e0b;
-  color: #0f172a;
+  background: #f472b6;
+  color: #130b18;
   font-weight: 800;
   font-size: 12px;
   border: 2px solid #fff;
@@ -432,11 +433,10 @@ body {
 }
 
 .target-marker-icon.read-blocked {
-  background: #ef4444;
+  background: #f43f5e;
   color: #fff;
 }
 
-/* Lazer Çizgisi Akış Animasyonu */
 .laser-line-anim {
   animation: laserDash 1s linear infinite;
 }
@@ -447,11 +447,11 @@ body {
   }
 }
 
-/* --- MODALLAR --- */
+/* --- MODALS --- */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.82);
+  background: rgba(15, 7, 20, 0.84);
   backdrop-filter: blur(6px);
   z-index: 2000;
   display: flex;
@@ -467,13 +467,13 @@ body {
   max-width: 520px;
   width: 100%;
   padding: 28px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
 }
 
 .modal-badge {
   display: inline-block;
-  background: rgba(56, 189, 248, 0.15);
-  color: var(--accent-blue);
+  background: rgba(236, 72, 153, 0.18);
+  color: var(--accent-pink-light);
   font-size: 0.72rem;
   font-weight: 700;
   padding: 4px 10px;
@@ -528,10 +528,9 @@ body {
 
 .f-stat strong {
   font-size: 1.25rem;
-  color: var(--accent-green);
+  color: var(--accent-pink-light);
 }
 
-/* Mobil Uyum */
 @media (max-width: 900px) {
   body { overflow: auto; height: auto; }
   .game-container { grid-template-columns: 1fr; height: auto; }

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TOPO-RUSH | Total Station Kot Avı (GeoGame)</title>
+  <title>TOPO-RUSH | Total Station Elevation Game</title>
 
   <!-- Google Fonts: JetBrains Mono & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,175 +18,175 @@
 </head>
 <body>
 
-  <!-- ÜST BİLGİ PANELİ (HUD) -->
+  <!-- TOP HUD BAR -->
   <header class="hud-bar">
     <div class="brand">
       <span class="brand-icon">📐</span>
       <div>
         <h1>TOPO-RUSH</h1>
-        <span class="subtitle">Total Station Kot & Görüş Hattı Simülasyonu</span>
+        <span class="subtitle">Total Station Elevation & Line-of-Sight Game</span>
       </div>
     </div>
 
     <div class="hud-metrics">
       <div class="metric-box">
-        <span class="metric-label">BÖLGE / ETAP</span>
+        <span class="metric-label">STAGE</span>
         <span id="hud-stage" class="metric-value">1 / 4</span>
       </div>
       <div class="metric-box" id="timer-box">
-        <span class="metric-label">KALAN SÜRE</span>
+        <span class="metric-label">TIME LEFT</span>
         <span id="hud-timer" class="metric-value mono">01:30</span>
       </div>
       <div class="metric-box">
-        <span class="metric-label">CAN</span>
+        <span class="metric-label">LIVES</span>
         <span id="hud-lives" class="metric-value hearts">♥ ♥ ♥</span>
       </div>
       <div class="metric-box highlight">
-        <span class="metric-label">SKOR</span>
+        <span class="metric-label">SCORE</span>
         <span id="hud-score" class="metric-value mono">0</span>
       </div>
       <div class="metric-box">
-        <span class="metric-label">REKOR</span>
+        <span class="metric-label">BEST</span>
         <span id="hud-highscore" class="metric-value mono">0</span>
       </div>
     </div>
   </header>
 
-  <!-- ANA OYUN ALANI -->
+  <!-- MAIN GAME AREA -->
   <main class="game-container">
-    <!-- SOL PANEL: İNTERAKTİF HARİTA -->
+    <!-- LEFT PANEL: INTERACTIVE MAP -->
     <section class="map-wrapper">
       <div id="map"></div>
 
-      <!-- Harita Üzeri Yüzen Bilgi Bandı -->
+      <!-- Floating Top Map Bar -->
       <div class="map-overlay-top">
         <div class="region-badge">
           <span class="pulse-dot"></span>
-          <span id="region-title">Görev Yükleniyor...</span>
+          <span id="region-title">Loading Region...</span>
         </div>
         <div class="map-controls">
-          <button id="btn-layer-topo" class="layer-btn active" title="İzohipsli Topoğrafik Harita">Topoğrafik</button>
-          <button id="btn-layer-sat" class="layer-btn" title="Uydu Görüntüsü">Uydu</button>
+          <button id="btn-layer-topo" class="layer-btn active" title="Topographic Map">Topo Map</button>
+          <button id="btn-layer-sat" class="layer-btn" title="Satellite View">Satellite</button>
         </div>
       </div>
 
-      <!-- Harita Altı İpucu & Durum Mesajı -->
+      <!-- Bottom Map Hint Banner -->
       <div id="toast-banner" class="toast-banner">
-        Haritada tüm hedefleri görebilecek hakim bir noktaya tıklayarak <strong>Total Station</strong> kurun! (-4 sn)
+        Click a high point on the map to place your <strong>Total Station</strong>! (-4 sec per move)
       </div>
     </section>
 
-    <!-- SAĞ PANEL: GÖREV LİSTESİ & KESİT PROFİLİ -->
+    <!-- RIGHT PANEL: MISSION & ELEVATION PROFILE -->
     <aside class="side-panel">
-      <!-- İstasyon Özeti -->
+      <!-- Station Info -->
       <div class="panel-card station-card">
         <div class="card-header">
-          <h2>📡 İSTASYON DURUMU</h2>
-          <span id="station-coords" class="mono small-text">Kurulum Bekleniyor</span>
+          <h2>📡 STATION STATUS</h2>
+          <span id="station-coords" class="mono small-text">Waiting for setup</span>
         </div>
         <div class="station-stats">
           <div>
-            <span class="stat-lbl">İstasyon Kotu (H₀)</span>
+            <span class="stat-lbl">Station Height</span>
             <strong id="station-elev" class="mono">-- m</strong>
           </div>
           <div>
-            <span class="stat-lbl">Kurulum Sayısı</span>
+            <span class="stat-lbl">Setups Used</span>
             <strong id="station-count" class="mono">0</strong>
           </div>
           <div>
-            <span class="stat-lbl">Max Menzil</span>
+            <span class="stat-lbl">Max Range</span>
             <strong id="station-range" class="mono">2500 m</strong>
           </div>
         </div>
       </div>
 
-      <!-- Hedef Noktalar (Miralar) -->
+      <!-- Target Points -->
       <div class="panel-card targets-card">
         <div class="card-header">
-          <h2>🎯 HEDEF NOKTALAR (MİRA)</h2>
+          <h2>🎯 TARGET POINTS</h2>
           <span id="targets-progress" class="badge-pill">0 / 3</span>
         </div>
         <ul id="target-list" class="target-list">
-          <!-- JS tarafından dinamik doldurulacak -->
+          <!-- Filled by JavaScript -->
         </ul>
       </div>
 
-      <!-- Chart.js Arazi Kesit Profili -->
+      <!-- Chart.js Elevation Profile -->
       <div class="panel-card chart-card">
         <div class="card-header">
-          <h2>📈 ARAZİ KESİT PROFİLİ</h2>
+          <h2>📈 ELEVATION PROFILE</h2>
           <select id="profile-selector" class="profile-select" disabled>
-            <option value="0">Hedef 1 (M1) Kesiti</option>
-            <option value="1">Hedef 2 (M2) Kesiti</option>
-            <option value="2">Hedef 3 (M3) Kesiti</option>
+            <option value="0">Target 1 (M1)</option>
+            <option value="1">Target 2 (M2)</option>
+            <option value="2">Target 3 (M3)</option>
           </select>
         </div>
         <div class="chart-container">
           <canvas id="elevationChart"></canvas>
         </div>
         <p id="los-status-text" class="los-note">
-          Kesit grafiğini görmek için haritada bir noktaya tıklayıp aleti kurun.
+          Click on the map to place the station and view the terrain profile.
         </p>
       </div>
 
-      <!-- Sonraki Etap Butonu -->
+      <!-- Next Stage Button -->
       <button id="btn-next-stage" class="primary-btn hidden">
-        Sonraki Bölgeye Geç (+15 sn Bonus) ➔
+        Next Region (+15 sec Bonus) ➔
       </button>
     </aside>
   </main>
 
-  <!-- BAŞLANGIÇ MODALI -->
+  <!-- START MODAL -->
   <div id="start-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-badge">GMT 458 • WEB GIS GEOGAME</div>
-      <h2>📐 TOPO-RUSH: Total Station Kot Avı</h2>
+      <h2>📐 TOPO-RUSH: Elevation Hunter</h2>
       <p class="modal-desc">
-        Türkiye'nin farklı topoğrafik bölgelerinde belirlenen <strong>3 hedef noktanın (mira)</strong> kotlarını okumak için araziye <strong>Total Station</strong> kur!
+        Place a <strong>Total Station</strong> on the map of Turkey to measure the elevation of <strong>3 target points</strong> in each region!
       </p>
       <ul class="rules-list">
-        <li>🗺️ <strong>İzohipsleri Oku:</strong> Eşyükselti eğrilerini incele, tüm hedefleri arazi engeline takılmadan görebilecek hakim bir noktaya tıkla.</li>
-        <li>⏱️ <strong>Zamana Karşı Yarış:</strong> Toplam <strong>90 saniyen</strong> var. Her yeni istasyon kurulumu <strong>-4 saniye</strong> harcar; etabı tamamlamak <strong>+15 saniye</strong> kazandırır.</li>
-        <li>📈 <strong>Canlı Kesit Analizi:</strong> İstasyon ile hedef arasında tepe varsa görüş kesilir (Kırmızı). Aleti daha uygun bir kota taşı!</li>
-        <li>♥ <strong>Dikkatli Ol:</strong> Göl/deniz içine veya saha dışına kurulum yapmak <strong>1 Can</strong> götürür.</li>
+        <li>🗺️ <strong>Read Contour Lines:</strong> Look at the hills and valleys. Click a clear high spot that can see all targets.</li>
+        <li>⏱️ <strong>Beat the Clock:</strong> You have <strong>90 seconds</strong>. Moving the station costs <strong>-4 seconds</strong>. Finishing a region gives <strong>+15 seconds</strong>.</li>
+        <li>📈 <strong>Check Line of Sight:</strong> If a hill blocks the laser (Red), move your station to a better height!</li>
+        <li>♥ <strong>Stay Safe:</strong> Placing the station inside water or outside the area costs <strong>1 Life</strong>.</li>
       </ul>
-      <button id="btn-start-game" class="primary-btn large">Ölçüme Başla 🚀</button>
+      <button id="btn-start-game" class="primary-btn large">Start Game 🚀</button>
     </div>
   </div>
 
-  <!-- OYUN SONU MODALI -->
+  <!-- GAME OVER MODAL -->
   <div id="gameover-modal" class="modal-backdrop hidden">
     <div class="modal-content">
-      <div id="gameover-badge" class="modal-badge">GÖREV TAMAMLANDI</div>
-      <h2 id="gameover-title">Harika Ölçüm Mühendis!</h2>
+      <div id="gameover-badge" class="modal-badge">MISSION COMPLETE</div>
+      <h2 id="gameover-title">Great Job, Surveyor!</h2>
       <div class="final-stats-grid">
         <div class="f-stat">
-          <span>Toplam Skor</span>
+          <span>Total Score</span>
           <strong id="final-score" class="mono">0</strong>
         </div>
         <div class="f-stat">
-          <span>En Yüksek Skor</span>
+          <span>Best Score</span>
           <strong id="final-highscore" class="mono">0</strong>
         </div>
         <div class="f-stat">
-          <span>Okunan Hedef</span>
+          <span>Targets Measured</span>
           <strong id="final-targets" class="mono">0 / 12</strong>
         </div>
         <div class="f-stat">
-          <span>Kalan Süre Bonusu</span>
+          <span>Time Bonus</span>
           <strong id="final-time-bonus" class="mono">+0</strong>
         </div>
       </div>
-      <button id="btn-restart-game" class="primary-btn large">Tekrar Oyna ↻</button>
+      <button id="btn-restart-game" class="primary-btn large">Play Again ↻</button>
     </div>
   </div>
 
-  <!-- Kütüphaneler: Leaflet, Turf.js, Chart.js -->
+  <!-- Libraries: Leaflet, Turf.js, Chart.js -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Oyun Modülleri -->
+  <!-- Game Modules -->
   <script src="js/data.js"></script>
   <script src="js/game.js"></script>
   <script src="js/app.js"></script>
