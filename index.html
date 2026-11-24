@@ -80,7 +80,7 @@
           Click inside the pink box on high ground to place your <strong>Total Station</strong>!
         </div>
         <button id="btn-next-stage" class="primary-btn next-stage-floating hidden">
-          View Survey Result & Next Region ➔
+          View 3D Result & Next Region ➔
         </button>
       </div>
     </section>
@@ -107,7 +107,6 @@
             <strong id="targets-progress" class="mono">0 / 3</strong>
           </div>
         </div>
-        <!-- Hot/Cold & Cartography Tip Box -->
         <div id="station-feedback-box" class="feedback-box">
           💡 <strong>Tip:</strong> Click on a high hill inside the pink dashed box!
         </div>
@@ -176,7 +175,7 @@
     </div>
   </div>
 
-  <!-- STAGE BRIEFING MODAL WITH REGION PHOTO -->
+  <!-- STAGE BRIEFING MODAL WITH REAL REGION PHOTO -->
   <div id="briefing-modal" class="modal-backdrop hidden">
     <div class="modal-content briefing-card">
       <div class="region-photo-frame">
@@ -199,18 +198,18 @@
     </div>
   </div>
 
-  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (ANIMATED SURVEY RESULT) -->
+  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (LASER + 3D DEM SURFACE) -->
   <div id="stage-complete-modal" class="modal-backdrop hidden">
     <div class="modal-content cinematic-card">
-      <div class="modal-badge">✅ TOPOGRAPHIC SURVEY COMPLETE</div>
+      <div class="modal-badge">✅ 3D ELEVATION MODEL & LASER SURVEY COMPLETE</div>
       <h2 id="cinematic-title">Region 1 Mapped Successfully!</h2>
       <p class="modal-desc" id="cinematic-subtitle">
-        Your Total Station locked lasers onto all 3 reflector prisms and generated the elevation network:
+        Laser beams locked onto all 3 reflector prisms (left) and generated the 3D terrain elevation surface (right):
       </p>
 
-      <!-- Animated Canvas: Total Station Firing Laser Beams to 3 Reflector Prisms + 3D Terrain Mesh -->
+      <!-- Dual Animation Canvas: Left = Laser Prisms | Right = Rotating 3D Elevation Mesh -->
       <div class="cinematic-stage-box">
-        <canvas id="surveyCinematicCanvas" width="460" height="215"></canvas>
+        <canvas id="surveyCinematicCanvas" width="500" height="230"></canvas>
       </div>
 
       <div id="cinematic-summary" class="cinematic-summary-bar">
@@ -221,11 +220,58 @@
     </div>
   </div>
 
-  <!-- GAME OVER / RETRY MODAL -->
+  <!-- GAME OVER / VICTORY MODAL WITH HARD-HAT ENGINEER ANIMATION -->
   <div id="gameover-modal" class="modal-backdrop hidden">
-    <div class="modal-content">
+    <div class="modal-content victory-modal-box">
+      <!-- Large Animated Hard-Hat Surveyor Character (Shown on Victory) -->
+      <div id="victory-engineer-stage" class="engineer-hero-box hidden">
+        <svg class="surveyor-character-svg" viewBox="0 0 180 155" width="165" height="142" aria-label="Master Surveyor with Hard Hat">
+          <!-- Glowing Aura -->
+          <circle cx="90" cy="82" r="64" fill="rgba(236, 72, 153, 0.14)" stroke="rgba(244, 114, 182, 0.35)" stroke-dasharray="5 5" stroke-width="1.5"/>
+          <!-- High-Visibility Safety Vest / Torso -->
+          <path d="M50 148 C50 116, 130 116, 130 148 Z" fill="#ec4899" stroke="#fdf2f8" stroke-width="2"/>
+          <!-- Neon Reflective Vest Stripes -->
+          <rect x="64" y="122" width="9" height="26" rx="2" fill="#fde047"/>
+          <rect x="107" y="122" width="9" height="26" rx="2" fill="#fde047"/>
+          <rect x="56" y="135" width="68" height="7" rx="2" fill="#fde047"/>
+          <!-- Neck -->
+          <rect x="81" y="102" width="18" height="18" rx="6" fill="#fed7aa"/>
+          <!-- Friendly Face -->
+          <circle cx="90" cy="82" r="26" fill="#fed7aa" stroke="#fdba74" stroke-width="1.5"/>
+          <!-- Eyes -->
+          <circle cx="81" cy="80" r="3" fill="#1e1b4b"/>
+          <circle cx="99" cy="80" r="3" fill="#1e1b4b"/>
+          <!-- Rosy Cheeks -->
+          <circle cx="74" cy="86" r="3.5" fill="#fb7185" opacity="0.55"/>
+          <circle cx="106" cy="86" r="3.5" fill="#fb7185" opacity="0.55"/>
+          <!-- Happy Smile -->
+          <path d="M81 91 Q90 100 99 91" fill="none" stroke="#1e1b4b" stroke-width="2.5" stroke-linecap="round"/>
+
+          <!-- Animated Dropping Yellow/Pink Safety Hard Hat (Baret) -->
+          <g class="hard-hat-drop">
+            <!-- Helmet Dome -->
+            <path d="M58 63 C58 34, 122 34, 122 63 Z" fill="#facc15" stroke="#fef08a" stroke-width="2"/>
+            <!-- Center Ridge -->
+            <path d="M85 37 L95 37 L93 62 L87 62 Z" fill="#eab308"/>
+            <!-- Helmet Brim -->
+            <rect x="50" y="60" width="80" height="7" rx="3.5" fill="#eab308" stroke="#fef08a" stroke-width="1.2"/>
+            <!-- Geomatics Badge on Helmet -->
+            <circle cx="90" cy="50" r="5" fill="#ec4899" stroke="#ffffff" stroke-width="1.2"/>
+          </g>
+
+          <!-- Sparkles -->
+          <text x="24" y="48" font-size="16">✨</text>
+          <text x="140" y="45" font-size="16">🎉</text>
+          <text x="142" y="108" font-size="15">📐</text>
+        </svg>
+      </div>
+
       <div id="gameover-badge" class="modal-badge">MISSION COMPLETE</div>
-      <h2 id="gameover-title">Great Job, Surveyor!</h2>
+      <h2 id="gameover-title">Sen harika bir haritacısın! 🎉</h2>
+      <p id="victory-invite-note" class="victory-note hidden">
+        Oyunu beğenip güzel yorumlarınızı esirgemezseniz farklı ülkeler için de geliştirilebilir 😊
+      </p>
+
       <div class="final-stats-grid">
         <div class="f-stat">
           <span>Total Score</span>

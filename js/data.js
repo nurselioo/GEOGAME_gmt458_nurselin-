@@ -1,6 +1,6 @@
 /**
  * js/data.js
- * 6 Study regions in Turkey with landscape photography, stage briefings, and elevation lookup
+ * 6 Study regions in Turkey with verified Wikimedia Commons landscape photography
  */
 
 const GAME_STAGES = [
@@ -8,7 +8,7 @@ const GAME_STAGES = [
     id: 1,
     name: "Region 1: Cappadocia – Goreme Valley",
     difficulty: "Easy",
-    photo: "https://images.unsplash.com/photo-1641128324972-af3212f0f6bd?auto=format&fit=crop&w=900&q=80",
+    photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Cappadocia_balloon_ride.jpg/960px-Cappadocia_balloon_ride.jpg",
     center: [38.6455, 34.8325],
     zoom: 14,
     maxRange: 3800,
@@ -26,7 +26,7 @@ const GAME_STAGES = [
     id: 2,
     name: "Region 2: Salt Lake Basin – Aksaray Plain",
     difficulty: "Easy",
-    photo: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
+    photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Tuz_G%C3%B6l%C3%BC_Salt_Lake_Turkey.jpg/960px-Tuz_G%C3%B6l%C3%BC_Salt_Lake_Turkey.jpg",
     center: [38.3950, 33.9950],
     zoom: 14,
     maxRange: 4000,
@@ -44,7 +44,7 @@ const GAME_STAGES = [
     id: 3,
     name: "Region 3: Uludag – Mountain Ridge",
     difficulty: "Medium",
-    photo: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=900&q=80",
+    photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Uluda%C4%9F_summit.jpg/960px-Uluda%C4%9F_summit.jpg",
     center: [40.1045, 29.1330],
     zoom: 14,
     maxRange: 3800,
@@ -62,7 +62,7 @@ const GAME_STAGES = [
     id: 4,
     name: "Region 4: Pamukkale – Travertine Terraces",
     difficulty: "Medium",
-    photo: "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=900&q=80",
+    photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Pamukkale_travertines_03.jpg/960px-Pamukkale_travertines_03.jpg",
     center: [37.9240, 29.1230],
     zoom: 14,
     maxRange: 3800,
@@ -80,7 +80,7 @@ const GAME_STAGES = [
     id: 5,
     name: "Region 5: Kackar – Ayder Highland",
     difficulty: "Hard",
-    photo: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80",
+    photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Ayder_Yaylas%C4%B1_Rize.jpg/960px-Ayder_Yaylas%C4%B1_Rize.jpg",
     center: [40.9525, 41.1050],
     zoom: 14,
     maxRange: 3600,
@@ -98,7 +98,7 @@ const GAME_STAGES = [
     id: 6,
     name: "Region 6: Nemrut Caldera – Bitlis",
     difficulty: "Expert",
-    photo: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=900&q=80",
+    photo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Nemrut_Crater_Lake.jpg/960px-Nemrut_Crater_Lake.jpg",
     center: [38.6200, 42.2420],
     zoom: 13,
     maxRange: 4200,
