@@ -1,21 +1,49 @@
 /**
  * js/app.js
- * Leaflet map, Flicker-Free Preloaded Stage Photos,
+ * Leaflet map, Verified Wikimedia Region Photos,
  * Left-Side Floating Hot/Cold Coach, Dynamic Next-Move Terrain & Laser Analyzer,
- * 3D Side-View Relief Block Model, Shuffled Regional Quizzes, and Victory Screen
+ * 3D Side-View Relief Block Model, Shuffled Regional Quizzes,
+ * and Victory Screen with Hard-Hat Surveyor + Full 3D Elevation Relief Map of Turkey
  */
 
 document.addEventListener("DOMContentLoaded", () => {
   const game = createGameEngine(GAME_STAGES);
 
   // =========================================================================
-  // PRELOAD ALL 6 REGION PHOTOS TO PREVENT ANY FLICKER OR FLASHING
+  // PRELOAD VERIFIED WIKIMEDIA COMMONS PHOTOS FOR ALL 6 REGIONS
   // =========================================================================
-  const preloadedImages = {};
+  const resolvedPhotoUrls = {};
+
+  async function resolveCommonsPhoto(stage) {
+    if (resolvedPhotoUrls[stage.id]) return resolvedPhotoUrls[stage.id];
+    try {
+      const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(
+        stage.commonsFile
+      )}&prop=imageinfo&iiprop=url&iiurlwidth=1000&format=json&origin=*`;
+      const resp = await fetch(apiUrl);
+      if (resp.ok) {
+        const data = await resp.json();
+        const pages = data?.query?.pages || {};
+        const firstPage = Object.values(pages)[0];
+        const info = firstPage?.imageinfo?.[0];
+        const bestUrl = info?.thumburl || info?.url;
+        if (bestUrl) {
+          resolvedPhotoUrls[stage.id] = bestUrl;
+          return bestUrl;
+        }
+      }
+    } catch (e) {
+      // Fall back to Special:FilePath URL
+    }
+    resolvedPhotoUrls[stage.id] = stage.photo;
+    return stage.photo;
+  }
+
   GAME_STAGES.forEach((st) => {
-    const img = new Image();
-    img.src = st.photo;
-    preloadedImages[st.id] = img;
+    resolveCommonsPhoto(st).then((url) => {
+      const img = new Image();
+      img.src = url;
+    });
   });
 
   // =========================================================================
@@ -159,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let elevationChart = null;
   let isProcessingClick = false;
   let cinematicAnimId = null;
+  let turkeyReliefAnimId = null;
 
   function initChart() {
     const ctx = document.getElementById("elevationChart").getContext("2d");
@@ -255,24 +284,26 @@ document.addEventListener("DOMContentLoaded", () => {
     hudHighscore.textContent = state.highScore;
   }
 
-  // Flicker-Free Region Photo Loader (Clears previous image before fading in new one)
-  function openStageBriefing(stage) {
+  // Flicker-Free Verified Region Photo Loader
+  async function openStageBriefing(stage) {
     game.pauseTimer();
 
     const state = game.getState();
     const photoEl = document.getElementById("briefing-photo");
 
-    // Reset image immediately so old stage image never flashes
     photoEl.classList.remove("loaded");
+    photoEl.removeAttribute("src");
+
+    const finalUrl = await resolveCommonsPhoto(stage);
     photoEl.onload = () => {
       photoEl.classList.add("loaded");
     };
     photoEl.onerror = () => {
-      photoEl.onerror = null;
-      photoEl.src = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=85";
-      photoEl.classList.add("loaded");
+      if (photoEl.src !== stage.photo) {
+        photoEl.src = stage.photo;
+      }
     };
-    photoEl.src = stage.photo;
+    photoEl.src = finalUrl;
     if (photoEl.complete && photoEl.naturalWidth > 0) {
       photoEl.classList.add("loaded");
     }
@@ -439,7 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // EVENT HANDLER 1: Map Click to Place Total Station
+  // MAP CLICK TO PLACE TOTAL STATION
   // =========================================================================
   map.on("click", async (e) => {
     const state = game.getState();
@@ -448,7 +479,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const stage = game.getCurrentStage();
     const { lat, lng } = e.latlng;
 
-    // 1. Out of bounds check
     const inBounds =
       lat >= stage.bounds.minLat &&
       lat <= stage.bounds.maxLat &&
@@ -465,7 +495,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // 2. Water check
     if (stage.waterZone) {
       const distToLake = turf.distance(
         turf.point([lng, lat]),
@@ -632,7 +661,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     buildSimpleCoaching(groundHeight, visibleIds, blockedDetails, farDetails, highestObstacle, result);
 
-    // Automatically inspect the blocked/problematic target ray so the player learns immediately
     profileSelector.disabled = false;
     profileSelector.value = String(firstProblemIndex);
     drawProfileChart(currentProfiles[firstProblemIndex]);
@@ -670,9 +698,6 @@ document.addEventListener("DOMContentLoaded", () => {
     isProcessingClick = false;
   });
 
-  // =========================================================================
-  // LEFT-SIDE FLOATING COACH: SIMPLE HOT/COLD & DIRECTION HINTS
-  // =========================================================================
   function buildSimpleCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
     if (result.stageCompleted) {
       setFeedback(`🔥 <strong>Bullseye (${Math.round(height)} m)!</strong> All 3 targets measured!`, "good");
@@ -709,9 +734,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // =========================================================================
-  // DYNAMIC & EDUCATIONAL LINE-OF-SIGHT CHART + NEXT-MOVE ADVISOR
-  // =========================================================================
   function drawProfileChart(profile) {
     if (!profile || !elevationChart) return;
 
@@ -722,7 +744,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return `${Math.round((profile.distanceMeters * i) / 12)}m`;
     });
 
-    // Highlight blocking peak on terrain line
     const terrainPointRadii = profile.terrainElevs.map((_, i) =>
       i === profile.blockingSampleIndex ? 6 : 2
     );
@@ -741,7 +762,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     elevationChart.update();
 
-    // Update educational metrics & next-point recommendation strip
     if (profile.status === "visible") {
       chartGuidanceStrip.className = "chart-guidance-strip clear";
       chartGuidanceStrip.innerHTML = `✅ <strong>${profile.target.id} Locked!</strong> Your laser clears the terrain by <strong>+${Math.max(1, profile.minClearance)} m</strong>.`;
@@ -814,7 +834,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btnContinueNext.disabled = true;
     btnContinueNext.textContent = "Select an Answer Above to Continue ➔";
 
-    // Shuffle options so the correct answer appears randomly across A, B, or C
     const indexedOptions = qObj.options.map((text, idx) => ({
       text,
       isCorrect: idx === qObj.correctIndex
@@ -859,7 +878,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Hypsometric color helper for 3D side-view relief model
   function getHypsometricColor(normZ, alpha = 0.9) {
     const t = Math.max(0, Math.min(1, normZ));
     let r, g, b;
@@ -882,7 +900,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
-  // City-specific 3D side-view relief height generator
   function getRegionReliefHeight(reliefType, nx, nz, phase) {
     const gentleWave = Math.sin((nx + phase) * 3) * 2.5;
     switch (reliefType) {
@@ -969,7 +986,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // LEFT PANEL: Laser -> Reflector Prisms
       ctx.fillStyle = "#f472b6";
       ctx.font = "bold 10px JetBrains Mono, monospace";
       ctx.fillText("1. LASER PRISM LOCK", 12, 18);
@@ -1208,6 +1224,160 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   }
 
+  // =========================================================================
+  // FULL 3D ELEVATION RELIEF MAP OF TURKEY (ON VICTORY SCREEN)
+  // =========================================================================
+  function startTurkey3DReliefAnimation() {
+    if (turkeyReliefAnimId) cancelAnimationFrame(turkeyReliefAnimId);
+    const canvas = document.getElementById("turkeyReliefCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    let frame = 0;
+
+    const turkeyOutline = [
+      [0.03, 0.88], [0.09, 0.92], [0.16, 0.86], [0.22, 0.85], [0.33, 0.87],
+      [0.45, 0.90], [0.56, 0.84], [0.68, 0.82], [0.80, 0.86], [0.92, 0.88],
+      [0.97, 0.78], [0.96, 0.56], [0.95, 0.36], [0.86, 0.32], [0.72, 0.30],
+      [0.58, 0.28], [0.47, 0.14], [0.42, 0.24], [0.30, 0.26], [0.21, 0.18],
+      [0.12, 0.22], [0.05, 0.34], [0.04, 0.56], [0.06, 0.72]
+    ];
+
+    function isInsideTurkey(u, v) {
+      let inside = false;
+      for (let i = 0, j = turkeyOutline.length - 1; i < turkeyOutline.length; j = i++) {
+        const xi = turkeyOutline[i][0], yi = turkeyOutline[i][1];
+        const xj = turkeyOutline[j][0], yj = turkeyOutline[j][1];
+        const intersect = ((yi > v) !== (yj > v)) && (u < ((xj - xi) * (v - yi)) / (yj - yi + 1e-6) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function getTurkeyReliefZ(u, v) {
+      const eastRise = u * 16;
+      const ponticMountains = 11 * Math.exp(-((v - 0.80) ** 2) * 55) * Math.min(1, u * 1.4);
+      const taurusMountains = 10 * Math.exp(-((v - 0.27) ** 2) * 50) * Math.min(1, u * 1.5);
+      const kackarPeak = 13 * Math.exp(-((u - 0.82) ** 2 * 35 + (v - 0.81) ** 2 * 45));
+      const araratAndNemrut = 15 * Math.exp(-((u - 0.90) ** 2 * 30 + (v - 0.56) ** 2 * 35));
+      const uludagPeak = 8 * Math.exp(-((u - 0.18) ** 2 * 65 + (v - 0.72) ** 2 * 65));
+      const saltLakeDip = -5 * Math.exp(-((u - 0.43) ** 2 * 55 + (v - 0.54) ** 2 * 55));
+      return Math.max(2, 3 + eastRise + ponticMountains + taurusMountains + kackarPeak + araratAndNemrut + uludagPeak + saltLakeDip);
+    }
+
+    const surveyedCities = [
+      { id: "1", name: "Nevsehir", u: 0.49, v: 0.50 },
+      { id: "2", name: "Aksaray", u: 0.44, v: 0.48 },
+      { id: "3", name: "Bursa", u: 0.18, v: 0.72 },
+      { id: "4", name: "Denizli", u: 0.18, v: 0.34 },
+      { id: "5", name: "Rize", u: 0.82, v: 0.82 },
+      { id: "6", name: "Bitlis", u: 0.88, v: 0.49 }
+    ];
+
+    function projectTurkey(u, v, z) {
+      const tilt = Math.sin(frame * 0.025) * 4;
+      const sx = 22 + u * 255 + v * 28 + tilt;
+      const sy = 148 - v * 92 - z;
+      return { sx, sy };
+    }
+
+    function renderTurkey() {
+      frame += 1;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.strokeStyle = "rgba(56, 189, 248, 0.12)";
+      ctx.lineWidth = 1;
+      for (let y = 25; y < h; y += 22) {
+        ctx.beginPath();
+        ctx.moveTo(10, y);
+        ctx.lineTo(w - 10, y);
+        ctx.stroke();
+      }
+
+      const cols = 38;
+      const rows = 18;
+      for (let r = rows; r >= 0; r--) {
+        const v = r / rows;
+        ctx.beginPath();
+        let started = false;
+        for (let c = 0; c <= cols; c++) {
+          const u = c / cols;
+          if (isInsideTurkey(u, v)) {
+            const z = getTurkeyReliefZ(u, v);
+            const pt = projectTurkey(u, v, z);
+            if (!started) {
+              ctx.moveTo(pt.sx, pt.sy);
+              started = true;
+            } else {
+              ctx.lineTo(pt.sx, pt.sy);
+            }
+          } else {
+            started = false;
+          }
+        }
+        const norm = v * 0.4 + 0.35;
+        ctx.strokeStyle = getHypsometricColor(norm, 0.82);
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+      }
+
+      for (let c = 1; c < cols; c += 2) {
+        const u = c / cols;
+        ctx.beginPath();
+        let started = false;
+        for (let r = 0; r <= rows; r++) {
+          const v = r / rows;
+          if (isInsideTurkey(u, v)) {
+            const z = getTurkeyReliefZ(u, v);
+            const pt = projectTurkey(u, v, z);
+            if (!started) {
+              ctx.moveTo(pt.sx, pt.sy);
+              started = true;
+            } else {
+              ctx.lineTo(pt.sx, pt.sy);
+            }
+          } else {
+            started = false;
+          }
+        }
+        ctx.strokeStyle = getHypsometricColor(u, 0.42);
+        ctx.lineWidth = 1.0;
+        ctx.stroke();
+      }
+
+      surveyedCities.forEach((city, idx) => {
+        const z = getTurkeyReliefZ(city.u, city.v);
+        const topPt = projectTurkey(city.u, city.v, z + 5);
+        const basePt = projectTurkey(city.u, city.v, z);
+
+        ctx.strokeStyle = "#fde047";
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(basePt.sx, basePt.sy);
+        ctx.lineTo(topPt.sx, topPt.sy);
+        ctx.stroke();
+
+        const pulse = 2.6 + Math.sin(frame * 0.1 + idx) * 0.9;
+        ctx.fillStyle = "#ec4899";
+        ctx.beginPath();
+        ctx.arc(topPt.sx, topPt.sy, pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = "#fdf2f8";
+        ctx.font = "bold 8px JetBrains Mono, monospace";
+        ctx.fillText(city.name, topPt.sx - 14, topPt.sy - 5);
+      });
+
+      turkeyReliefAnimId = requestAnimationFrame(renderTurkey);
+    }
+
+    renderTurkey();
+  }
+
   btnContinueNext.addEventListener("click", () => {
     if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
     stageCompleteModal.classList.add("hidden");
@@ -1248,6 +1418,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   btnRetryStage.addEventListener("click", () => {
+    if (turkeyReliefAnimId) cancelAnimationFrame(turkeyReliefAnimId);
     gameoverModal.classList.add("hidden");
     game.retryCurrentStage(
       (state) => updateHUD(state),
@@ -1258,6 +1429,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("btn-restart-game").addEventListener("click", () => {
+    if (turkeyReliefAnimId) cancelAnimationFrame(turkeyReliefAnimId);
     gameoverModal.classList.add("hidden");
     startSession();
   });
@@ -1277,6 +1449,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function triggerGameOver(isVictory, timeBonus = 0) {
     if (cinematicAnimId) cancelAnimationFrame(cinematicAnimId);
+    if (turkeyReliefAnimId) cancelAnimationFrame(turkeyReliefAnimId);
     stageCompleteModal.classList.add("hidden");
 
     const finalState = game.getState();
@@ -1289,6 +1462,7 @@ document.addEventListener("DOMContentLoaded", () => {
       engineerStageEl.classList.remove("hidden");
       inviteNoteEl.classList.remove("hidden");
       btnRetryStage.classList.add("hidden");
+      startTurkey3DReliefAnimation();
     } else {
       document.getElementById("gameover-badge").textContent = `STOPPED AT STAGE ${finalState.stageNumber} / ${finalState.totalStages}`;
       document.getElementById("gameover-title").textContent = "Out of Time or Lives!";

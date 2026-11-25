@@ -1,53 +1,61 @@
 /**
  * js/game.js
- * Core game state, scoring engine, stage progression, pause/resume timer
+ * Game state management, scoring, timer, lives, and stage progression logic
  */
 
-function createGameEngine(stages) {
-  const STORAGE_KEY = "toporush_highscore_v2";
+const HIGH_SCORE_STORAGE_KEY = "toporush_high_score_v1";
 
-  const state = {
+function createGameEngine(stages) {
+  let savedHigh = 0;
+  try {
+    savedHigh = Number(localStorage.getItem(HIGH_SCORE_STORAGE_KEY)) || 0;
+  } catch (e) {
+    savedHigh = 0;
+  }
+
+  let state = {
     currentStageIndex: 0,
     score: 0,
-    highScore: Number(localStorage.getItem(STORAGE_KEY)) || 0,
+    highScore: savedHigh,
     lives: 3,
     timeLeft: 90,
     isGameActive: false,
     isPaused: false,
-    timerId: null,
+    stationCountInStage: 0,
     targetsReadInStage: new Set(),
-    totalTargetsRead: 0,
-    stationsDeployedInStage: 0
+    totalTargetsRead: 0
   };
 
-  function saveHighScore() {
+  let timerInterval = null;
+  let onTickCallback = null;
+  let onGameOverCallback = null;
+
+  function saveHighScoreIfNeeded() {
     if (state.score > state.highScore) {
       state.highScore = state.score;
-      localStorage.setItem(STORAGE_KEY, String(state.highScore));
+      try {
+        localStorage.setItem(HIGH_SCORE_STORAGE_KEY, String(state.highScore));
+      } catch (e) {
+        // Ignore storage restrictions
+      }
     }
   }
 
-  function stopTimer() {
-    if (state.timerId) {
-      clearInterval(state.timerId);
-      state.timerId = null;
-    }
-  }
-
-  function startTimer(onTick, onTimeOut) {
-    stopTimer();
-    state.timerId = setInterval(() => {
+  function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
       if (!state.isGameActive || state.isPaused) return;
       state.timeLeft -= 1;
+
       if (state.timeLeft <= 0) {
         state.timeLeft = 0;
-        state.isGameActive = false;
-        stopTimer();
-        onTick(getPublicState());
-        onTimeOut();
-      } else {
-        onTick(getPublicState());
+        stopGame();
+        if (onTickCallback) onTickCallback(getState());
+        if (onGameOverCallback) onGameOverCallback(false);
+        return;
       }
+
+      if (onTickCallback) onTickCallback(getState());
     }, 1000);
   }
 
@@ -59,138 +67,143 @@ function createGameEngine(stages) {
     state.isPaused = false;
   }
 
-  function startNewGame(onTick, onTimeOut) {
+  function startNewGame(onTick, onGameOver) {
+    onTickCallback = onTick;
+    onGameOverCallback = onGameOver;
+
     state.currentStageIndex = 0;
     state.score = 0;
     state.lives = 3;
     state.timeLeft = 90;
     state.isGameActive = true;
     state.isPaused = false;
+    state.stationCountInStage = 0;
     state.targetsReadInStage = new Set();
     state.totalTargetsRead = 0;
-    state.stationsDeployedInStage = 0;
-    startTimer(onTick, onTimeOut);
+
+    startTimer();
   }
 
-  function retryCurrentStage(onTick, onTimeOut) {
+  function retryCurrentStage(onTick, onGameOver) {
+    if (onTick) onTickCallback = onTick;
+    if (onGameOver) onGameOverCallback = onGameOver;
+
     state.lives = 3;
-    state.timeLeft = 60;
+    state.timeLeft = 90;
     state.isGameActive = true;
     state.isPaused = false;
+    state.stationCountInStage = 0;
     state.targetsReadInStage = new Set();
-    state.stationsDeployedInStage = 0;
-    startTimer(onTick, onTimeOut);
+
+    startTimer();
   }
 
-  function registerStationDeployment() {
-    state.stationsDeployedInStage += 1;
-    let timePenalty = 0;
-    if (state.stationsDeployedInStage > 1) {
-      timePenalty = 3;
-      state.timeLeft = Math.max(1, state.timeLeft - timePenalty);
-    }
-    return {
-      deployCount: state.stationsDeployedInStage,
-      timePenalty
-    };
-  }
-
-  function penalizeInvalidPlacement() {
-    state.lives = Math.max(0, state.lives - 1);
-    if (state.lives === 0) {
-      state.isGameActive = false;
-      stopTimer();
-    }
-    return state.lives;
-  }
-
-  function addBonusScore(points) {
-    state.score += points;
-    saveHighScore();
-    return state.score;
-  }
-
-  function recordVisibleTargets(visibleTargetIds) {
-    let newlyReadCount = 0;
-    visibleTargetIds.forEach(id => {
-      if (!state.targetsReadInStage.has(id)) {
-        state.targetsReadInStage.add(id);
-        state.totalTargetsRead += 1;
-        newlyReadCount += 1;
-      }
-    });
-
-    const stage = stages[state.currentStageIndex];
-    const stageCompleted = state.targetsReadInStage.size === stage.targets.length;
-
-    let pointsEarned = newlyReadCount * 150;
-    let singleStationBonus = 0;
-
-    if (stageCompleted && state.stationsDeployedInStage === 1) {
-      singleStationBonus = 300;
-      pointsEarned += singleStationBonus;
-    }
-
-    state.score += pointsEarned;
-    saveHighScore();
-
-    return {
-      newlyReadCount,
-      pointsEarned,
-      singleStationBonus,
-      stageCompleted,
-      readSet: new Set(state.targetsReadInStage)
-    };
-  }
-
-  function advanceToNextStage() {
-    if (state.currentStageIndex + 1 < stages.length) {
-      state.currentStageIndex += 1;
-      state.targetsReadInStage = new Set();
-      state.stationsDeployedInStage = 0;
-      state.timeLeft += 20;
-      return { gameFinished: false };
-    } else {
-      state.isGameActive = false;
-      stopTimer();
-      const timeBonus = state.timeLeft * 10;
-      state.score += timeBonus;
-      saveHighScore();
-      return { gameFinished: true, timeBonus };
-    }
-  }
-
-  function getPublicState() {
-    return {
-      stageIndex: state.currentStageIndex,
-      stageNumber: state.currentStageIndex + 1,
-      totalStages: stages.length,
-      score: state.score,
-      highScore: state.highScore,
-      lives: state.lives,
-      timeLeft: state.timeLeft,
-      isGameActive: state.isGameActive,
-      totalTargetsRead: state.totalTargetsRead,
-      stationsDeployedInStage: state.stationsDeployedInStage
-    };
+  function stopGame() {
+    state.isGameActive = false;
+    state.isPaused = false;
+    clearInterval(timerInterval);
+    saveHighScoreIfNeeded();
   }
 
   function getCurrentStage() {
     return stages[state.currentStageIndex];
   }
 
+  function registerStationDeployment() {
+    state.stationCountInStage += 1;
+    let timePenalty = 0;
+    if (state.stationCountInStage > 1) {
+      timePenalty = 3;
+      state.timeLeft = Math.max(1, state.timeLeft - timePenalty);
+    }
+    return {
+      deployCount: state.stationCountInStage,
+      timePenalty
+    };
+  }
+
+  function recordVisibleTargets(visibleTargetIds) {
+    const stage = getCurrentStage();
+    let newlyReadCount = 0;
+
+    visibleTargetIds.forEach(id => {
+      if (!state.targetsReadInStage.has(id)) {
+        state.targetsReadInStage.add(id);
+        state.totalTargetsRead += 1;
+        newlyReadCount += 1;
+        state.score += 100;
+      }
+    });
+
+    const stageCompleted = state.targetsReadInStage.size === stage.targets.length;
+    let singleStationBonus = 0;
+
+    if (stageCompleted && state.stationCountInStage === 1) {
+      singleStationBonus = 250;
+      state.score += singleStationBonus;
+    }
+
+    saveHighScoreIfNeeded();
+
+    return {
+      newlyReadCount,
+      stageCompleted,
+      singleStationBonus,
+      readSet: new Set(state.targetsReadInStage)
+    };
+  }
+
+  function addBonusScore(points) {
+    state.score += points;
+    saveHighScoreIfNeeded();
+    return state.score;
+  }
+
+  function penalizeInvalidPlacement() {
+    state.lives = Math.max(0, state.lives - 1);
+    if (state.lives === 0) {
+      stopGame();
+    }
+    return state.lives;
+  }
+
+  function advanceToNextStage() {
+    state.isPaused = false;
+    if (state.currentStageIndex + 1 < stages.length) {
+      state.currentStageIndex += 1;
+      state.stationCountInStage = 0;
+      state.targetsReadInStage = new Set();
+      state.timeLeft += 20;
+      return { gameFinished: false, nextStage: getCurrentStage() };
+    } else {
+      const timeBonus = state.timeLeft * 5;
+      state.score += timeBonus;
+      saveHighScoreIfNeeded();
+      stopGame();
+      return { gameFinished: true, timeBonus };
+    }
+  }
+
+  function getState() {
+    return {
+      ...state,
+      stageNumber: state.currentStageIndex + 1,
+      totalStages: stages.length
+    };
+  }
+
   return {
     startNewGame,
     retryCurrentStage,
+    stopGame,
     pauseTimer,
     resumeTimer,
-    registerStationDeployment,
-    penalizeInvalidPlacement,
-    addBonusScore,
-    recordVisibleTargets,
-    advanceToNextStage,
-    getState: getPublicState,
     getCurrentStage,
-    stopTimer
+    registerStationDeployment,
+    recordVisibleTargets,
+    addBonusScore,
+    penalizeInvalidPlacement,
+    advanceToNextStage,
+    getState
   };
 }

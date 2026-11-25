@@ -862,17 +862,27 @@ body {
   color: #fde68a;
 }
 
-/* --- VICTORY HARD-HAT ENGINEER ANIMATION & MESSAGE --- */
-.engineer-hero-box {
+/* --- VICTORY SHOWCASE: HARD-HAT ENGINEER + 3D RELIEF MAP OF TURKEY --- */
+.victory-modal-box {
+  max-width: 640px;
+}
+
+.victory-showcase-row {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(19, 11, 24, 0.72);
+  border: 1px solid rgba(244, 114, 182, 0.45);
+  border-radius: 14px;
+  padding: 12px;
   margin-bottom: 12px;
 }
 
 .surveyor-character-svg {
   animation: happyBounce 2.6s ease-in-out infinite;
   filter: drop-shadow(0 8px 22px rgba(236, 72, 153, 0.48));
+  flex-shrink: 0;
 }
 
 .hard-hat-drop {
@@ -898,6 +908,32 @@ body {
 @keyframes happyBounce {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-7px); }
+}
+
+.turkey-relief-card {
+  flex: 1;
+  background: #120918;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.turkey-relief-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #34d399;
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+
+#turkeyReliefCanvas {
+  width: 100%;
+  height: 165px;
+  display: block;
 }
 
 .victory-note {
@@ -999,4 +1035,10 @@ body {
   .game-container { grid-template-columns: 1fr; height: auto; }
   .map-wrapper { height: 55vh; }
   .map-coach-floating { width: 260px; }
+}
+
+@media (max-width: 640px) {
+  .victory-showcase-row {
+    flex-direction: column;
+  }
 }

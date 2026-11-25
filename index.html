@@ -142,7 +142,6 @@
           </select>
         </div>
 
-        <!-- Live Next-Point Guidance Strip -->
         <div id="chart-guidance-strip" class="chart-guidance-strip">
           <span>🎯 <strong>Next Pick Guide:</strong> Place your station to inspect terrain clearance.</span>
         </div>
@@ -195,7 +194,7 @@
     </div>
   </div>
 
-  <!-- STAGE BRIEFING MODAL WITH REAL REGION PHOTO -->
+  <!-- STAGE BRIEFING MODAL WITH VERIFIED REGION PHOTO -->
   <div id="briefing-modal" class="modal-backdrop hidden">
     <div class="modal-content briefing-card">
       <div class="region-photo-frame">
@@ -218,7 +217,7 @@
     </div>
   </div>
 
-  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (LASER + 3D SIDE RELIEF + REGION QUIZ) -->
+  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL -->
   <div id="stage-complete-modal" class="modal-backdrop hidden">
     <div class="modal-content cinematic-card">
       <div class="modal-badge">✅ REGION SURVEYED • 3D SIDE-VIEW RELIEF MODEL</div>
@@ -235,7 +234,7 @@
         <!-- Filled dynamically with measured heights & bonus -->
       </div>
 
-      <!-- Region Topography Question (Never blocks stage progression) -->
+      <!-- Region Topography Question -->
       <div class="stage-quiz-box">
         <div class="quiz-header-row">
           <span class="quiz-tag">🌍 REGION & TOPOGRAPHY CHECK (+100 PTS BONUS)</span>
@@ -251,11 +250,12 @@
     </div>
   </div>
 
-  <!-- GAME OVER / VICTORY MODAL WITH HARD-HAT ENGINEER ANIMATION -->
+  <!-- GAME OVER / VICTORY MODAL WITH HARD-HAT ENGINEER + 3D RELIEF MAP OF TURKEY -->
   <div id="gameover-modal" class="modal-backdrop hidden">
     <div class="modal-content victory-modal-box">
-      <div id="victory-engineer-stage" class="engineer-hero-box hidden">
-        <svg class="surveyor-character-svg" viewBox="0 0 180 155" width="220" height="190" aria-label="Master Surveyor with Hard Hat">
+      <div id="victory-engineer-stage" class="victory-showcase-row hidden">
+        <!-- Left: Hard-Hat Surveyor Engineer -->
+        <svg class="surveyor-character-svg" viewBox="0 0 180 155" width="175" height="150" aria-label="Master Surveyor with Hard Hat">
           <circle cx="90" cy="82" r="66" fill="rgba(236, 72, 153, 0.16)" stroke="rgba(244, 114, 182, 0.45)" stroke-dasharray="5 5" stroke-width="1.8"/>
           <path d="M46 150 C46 114, 134 114, 134 150 Z" fill="#ec4899" stroke="#fdf2f8" stroke-width="2"/>
           <rect x="62" y="122" width="10" height="28" rx="2" fill="#fde047"/>
@@ -276,10 +276,15 @@
             <circle cx="90" cy="49" r="5.5" fill="#ec4899" stroke="#ffffff" stroke-width="1.3"/>
           </g>
 
-          <text x="18" y="45" font-size="18">✨</text>
-          <text x="142" y="43" font-size="18">🎉</text>
-          <text x="144" y="110" font-size="16">📐</text>
+          <text x="16" y="42" font-size="16">✨</text>
+          <text x="144" y="42" font-size="16">🎉</text>
         </svg>
+
+        <!-- Right: Full 3D Elevation Relief Map of Turkey -->
+        <div class="turkey-relief-card">
+          <div class="turkey-relief-label">🇹🇷 3D TURKEY ELEVATION RELIEF • ALL 6 STAGES</div>
+          <canvas id="turkeyReliefCanvas" width="330" height="165"></canvas>
+        </div>
       </div>
 
       <div id="gameover-badge" class="modal-badge">MISSION COMPLETE</div>
