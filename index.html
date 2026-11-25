@@ -57,7 +57,7 @@
 
   <!-- MAIN GAME AREA -->
   <main class="game-container">
-    <!-- LEFT PANEL: INTERACTIVE MAP + FLOATING HOT/COLD COACH -->
+    <!-- LEFT PANEL: INTERACTIVE MAP + HARD-HAT SURVEYOR DIALOGUE BUBBLE -->
     <section class="map-wrapper">
       <div id="map"></div>
 
@@ -74,14 +74,49 @@
         </div>
       </div>
 
-      <!-- LEFT-SIDE FLOATING HOT/COLD COACH BOX -->
-      <div class="map-coach-floating">
-        <div class="coach-float-header">
-          <span>📡 STATION COACH</span>
-          <span id="cursor-elev-badge" class="badge-pill">Cursor: -- m</span>
+      <!-- LEFT-SIDE FIELD SURVEYOR WITH SPEECH BUBBLE ABOVE HEAD -->
+      <div class="surveyor-coach-widget" id="surveyor-coach-widget">
+        <!-- Speech Bubble Positioned Directly Above Engineer's Hard Hat -->
+        <div id="station-feedback-box" class="speech-bubble-box">
+          <div class="bubble-top-row">
+            <span class="speaker-tag">👷 FIELD ENGINEER</span>
+            <span id="cursor-elev-badge" class="badge-pill">Cursor: -- m</span>
+          </div>
+          <div id="speech-bubble-text" class="speech-bubble-text">
+            💡 Click on a high hill inside the pink box!
+          </div>
+          <div class="speech-bubble-tail"></div>
         </div>
-        <div id="station-feedback-box" class="feedback-box">
-          💡 Click on a high hill inside the pink box!
+
+        <!-- Hard-Hat Surveyor Engineer Character Below the Speech Bubble -->
+        <div class="surveyor-avatar-row">
+          <div class="surveyor-avatar-badge" title="Senior Geomatics Engineer">
+            <svg viewBox="0 0 120 112" width="76" height="72" aria-label="Hard-Hat Surveyor Engineer">
+              <!-- Outer Glow Ring -->
+              <circle cx="60" cy="58" r="50" fill="#1b1022" stroke="#ec4899" stroke-width="2.5"/>
+              <!-- High-Vis Safety Vest & Shoulders -->
+              <path d="M24 104 C24 78, 96 78, 96 104 Z" fill="#ec4899" stroke="#fdf2f8" stroke-width="1.8"/>
+              <rect x="37" y="83" width="7" height="21" rx="1.5" fill="#fde047"/>
+              <rect x="76" y="83" width="7" height="21" rx="1.5" fill="#fde047"/>
+              <rect x="31" y="93" width="58" height="5" rx="1.5" fill="#fde047"/>
+              <!-- Neck & Friendly Face -->
+              <rect x="52" y="68" width="16" height="13" rx="4" fill="#fed7aa"/>
+              <circle cx="60" cy="54" r="20" fill="#fed7aa" stroke="#fdba74" stroke-width="1.2"/>
+              <!-- Eyes & Rosy Cheeks -->
+              <circle cx="53" cy="52" r="2.5" fill="#1e1b4b"/>
+              <circle cx="67" cy="52" r="2.5" fill="#1e1b4b"/>
+              <circle cx="47" cy="57" r="2.8" fill="#fb7185" opacity="0.55"/>
+              <circle cx="73" cy="57" r="2.8" fill="#fb7185" opacity="0.55"/>
+              <!-- Dynamic Mouth Expression -->
+              <path id="engineer-mouth" d="M53 60 Q60 67 67 60" fill="none" stroke="#1e1b4b" stroke-width="2.2" stroke-linecap="round"/>
+              <!-- Yellow Surveyor Hard Hat -->
+              <path d="M35 40 C35 17, 85 17, 85 40 Z" fill="#facc15" stroke="#fef08a" stroke-width="1.6"/>
+              <path d="M56 19 L64 19 L63 39 L57 39 Z" fill="#eab308"/>
+              <rect x="29" y="38" width="62" height="6" rx="3" fill="#eab308" stroke="#fef08a" stroke-width="1"/>
+              <circle cx="60" cy="30" r="4.2" fill="#ec4899" stroke="#ffffff" stroke-width="1.1"/>
+            </svg>
+          </div>
+          <span class="surveyor-role-pill">Chief Surveyor</span>
         </div>
       </div>
 
@@ -187,8 +222,8 @@
       <ul class="rules-list">
         <li>🏔️ <strong>Pick High Ground:</strong> Higher hills give a clear laser path over valleys and ridges.</li>
         <li>🌊 <strong>Avoid Water:</strong> Tripods need solid dry ground—never click inside lakes.</li>
-        <li>🔥 <strong>Left Map Coach:</strong> Watch the Hot/Cold coach box on the left side of the map for instant direction hints.</li>
-        <li>⏱️ <strong>Beat the Clock:</strong> Start with <strong>90s</strong>. Moving costs <strong>-3s</strong>; finishing a region adds <strong>+20s</strong>.</li>
+        <li>👷 <strong>Field Engineer Bubble:</strong> Read the hard-hat surveyor's dialogue bubble on the map for instant direction hints.</li>
+        <li>⏱️ <strong>High-Stakes Timer:</strong> Start with <strong>90s</strong>. Moving costs <strong>-6s+</strong>, poor spots cost <strong>-4s</strong>, and out-of-bounds/water costs <strong>-10s</strong>!</li>
       </ul>
       <button id="btn-start-game" class="primary-btn large">Start Game 🚀</button>
     </div>

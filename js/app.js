@@ -1,7 +1,8 @@
 /**
  * js/app.js
- * Leaflet map, Guaranteed Instant Landmark Artwork + Official Wikipedia Landmark Photos,
- * Left-Side Floating Hot/Cold Coach, Dynamic Next-Move Terrain & Laser Analyzer,
+ * Leaflet map, Multi-Language Wikipedia Landmark Resolver (EN + TR) + Built-in Artwork,
+ * Left-Side Hard-Hat Surveyor Engineer with Overhead Dialogue Speech Bubble,
+ * Dynamic Next-Move Terrain & Laser Analyzer, Heightened Time Penalties,
  * 3D Side-View Relief Block Model, Shuffled Regional Quizzes,
  * and Victory Screen with Hard-Hat Surveyor + Full 3D Elevation Relief Map of Turkey
  */
@@ -10,27 +11,36 @@ document.addEventListener("DOMContentLoaded", () => {
   const game = createGameEngine(GAME_STAGES);
 
   // =========================================================================
-  // OFFICIAL WIKIPEDIA LANDMARK PHOTO RESOLVER + INSTANT BUILT-IN FALLBACK
+  // MULTI-SOURCE WIKIPEDIA LANDMARK PHOTO RESOLVER (EN + TR) + INSTANT FALLBACK
   // =========================================================================
   const resolvedPhotoUrls = {};
 
   async function resolveOfficialLandmarkPhoto(stage) {
     if (resolvedPhotoUrls[stage.id]) return resolvedPhotoUrls[stage.id];
     const fallbackSvg = getBuiltInRegionArtworkDataUrl(stage.reliefType);
-    try {
-      const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(stage.wikiTitle)}`;
-      const resp = await fetch(apiUrl);
-      if (resp.ok) {
-        const data = await resp.json();
-        const imgUrl = data?.originalimage?.source || data?.thumbnail?.source;
-        if (imgUrl) {
-          resolvedPhotoUrls[stage.id] = imgUrl;
-          return imgUrl;
+    const titles = stage.wikiTitles || [stage.wikiTitle];
+    const langs = stage.wikiLang === "tr" ? ["tr", "en"] : ["en", "tr"];
+
+    for (const lang of langs) {
+      for (const title of titles) {
+        if (!title) continue;
+        try {
+          const apiUrl = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+          const resp = await fetch(apiUrl);
+          if (resp.ok) {
+            const data = await resp.json();
+            const imgUrl = data?.originalimage?.source || data?.thumbnail?.source;
+            if (imgUrl && !imgUrl.toLowerCase().endsWith(".svg")) {
+              resolvedPhotoUrls[stage.id] = imgUrl;
+              return imgUrl;
+            }
+          }
+        } catch (e) {
+          // Try next title/language
         }
       }
-    } catch (e) {
-      // Offline or blocked: use built-in landmark illustration
     }
+
     resolvedPhotoUrls[stage.id] = fallbackSvg;
     return fallbackSvg;
   }
@@ -128,6 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const stationElevEl = document.getElementById("station-elev");
   const stationCountEl = document.getElementById("station-count");
   const stationFeedbackBox = document.getElementById("station-feedback-box");
+  const speechBubbleText = document.getElementById("speech-bubble-text");
+  const engineerMouth = document.getElementById("engineer-mouth");
 
   const targetListEl = document.getElementById("target-list");
   const targetsProgressEl = document.getElementById("targets-progress");
@@ -256,11 +268,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setFeedback(htmlText, level = "info") {
-    stationFeedbackBox.innerHTML = htmlText;
-    stationFeedbackBox.className = "feedback-box";
-    if (level === "good") stationFeedbackBox.classList.add("good");
-    if (level === "warn") stationFeedbackBox.classList.add("warn");
-    if (level === "bad") stationFeedbackBox.classList.add("bad");
+    speechBubbleText.innerHTML = htmlText;
+    stationFeedbackBox.className = "speech-bubble-box";
+    if (level === "good") {
+      stationFeedbackBox.classList.add("good");
+      if (engineerMouth) engineerMouth.setAttribute("d", "M52 59 Q60 69 68 59");
+    } else if (level === "warn") {
+      stationFeedbackBox.classList.add("warn");
+      if (engineerMouth) engineerMouth.setAttribute("d", "M54 62 Q60 62 66 62");
+    } else if (level === "bad") {
+      stationFeedbackBox.classList.add("bad");
+      if (engineerMouth) engineerMouth.setAttribute("d", "M53 65 Q60 58 67 65");
+    } else {
+      if (engineerMouth) engineerMouth.setAttribute("d", "M53 60 Q60 67 67 60");
+    }
+  }
+
+  function flashTimerPenalty() {
+    timerBox.classList.add("timer-danger");
+    setTimeout(() => {
+      if (game.getState().timeLeft > 15) {
+        timerBox.classList.remove("timer-danger");
+      }
+    }, 900);
   }
 
   function updateHUD(state) {
@@ -271,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (state.timeLeft <= 15 && state.isGameActive) {
       timerBox.classList.add("timer-danger");
-    } else {
+    } else if (state.timeLeft > 15) {
       timerBox.classList.remove("timer-danger");
     }
 
@@ -288,7 +318,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const photoEl = document.getElementById("briefing-photo");
     const builtInArt = getBuiltInRegionArtworkDataUrl(stage.reliefType);
 
-    // 1. Immediately display the crisp built-in regional landmark artwork so it is NEVER empty
     photoEl.onload = () => photoEl.classList.add("loaded");
     photoEl.onerror = () => {
       photoEl.src = builtInArt;
@@ -312,7 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     briefingModal.classList.remove("hidden");
 
-    // 2. Seamlessly upgrade to the real Wikipedia photograph once preloaded in memory
     const realPhotoUrl = await resolveOfficialLandmarkPhoto(stage);
     if (realPhotoUrl && realPhotoUrl !== builtInArt && game.getCurrentStage().id === stage.id) {
       const preloader = new Image();
@@ -363,7 +391,7 @@ document.addEventListener("DOMContentLoaded", () => {
     metricReqElevEl.textContent = "Min Hill Needed: --";
     losStatusText.textContent = "Dashed line = Laser beam. Pick a hill higher than any ridge between you and the target.";
     losStatusText.style.color = "#d8b4e2";
-    setFeedback(`💡 ${stage.hint}`, "info");
+    setFeedback(`“${stage.hint}”`, "info");
 
     const rectBounds = [
       [stage.bounds.minLat, stage.bounds.minLng],
@@ -472,7 +500,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // MAP CLICK TO PLACE TOTAL STATION
+  // MAP CLICK TO PLACE TOTAL STATION (WITH HIGHER TIME PENALTIES FOR ERRORS)
   // =========================================================================
   map.on("click", async (e) => {
     const state = game.getState();
@@ -489,11 +517,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!inBounds) {
       playErrorSound();
-      const remLives = game.penalizeInvalidPlacement();
+      const pen = game.penalizeInvalidPlacement();
+      flashTimerPenalty();
       updateHUD(game.getState());
-      setFeedback("❄️ <strong>Outside Box:</strong> Click inside the pink dashed box!", "bad");
-      showBanner("⚠️ Click inside the pink box! <strong>-1 Life</strong>", "error");
-      if (remLives === 0) triggerGameOver(false);
+      setFeedback(`“Watch out! Stay inside the pink survey box!” <strong>[-10s]</strong>`, "bad");
+      showBanner(`⚠️ Outside box! <strong>-1 Life & -10s Time</strong>`, "error");
+      if (pen.lives === 0 || pen.timeLeft === 0) triggerGameOver(false);
       return;
     }
 
@@ -505,11 +534,12 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       if (distToLake <= stage.waterZone.radius) {
         playErrorSound();
-        const remLives = game.penalizeInvalidPlacement();
+        const pen = game.penalizeInvalidPlacement();
+        flashTimerPenalty();
         updateHUD(game.getState());
-        setFeedback("❄️ <strong>Water!</strong> Tripods need dry ground. Click on the east ridge.", "bad");
-        showBanner("🌊 Water! Click on dry ground. <strong>-1 Life</strong>", "error");
-        if (remLives === 0) triggerGameOver(false);
+        setFeedback(`“Careful, that's the crater lake! Set the tripod on the dry east ridge.” <strong>[-10s]</strong>`, "bad");
+        showBanner(`🌊 Water! <strong>-1 Life & -10s Time</strong>`, "error");
+        if (pen.lives === 0 || pen.timeLeft === 0) triggerGameOver(false);
         return;
       }
     }
@@ -519,7 +549,14 @@ document.addEventListener("DOMContentLoaded", () => {
     showBanner("📡 Measuring targets...");
 
     const deployInfo = game.registerStationDeployment();
+    if (deployInfo.timePenalty > 0) flashTimerPenalty();
     updateHUD(game.getState());
+
+    if (!game.getState().isGameActive) {
+      isProcessingClick = false;
+      triggerGameOver(false);
+      return;
+    }
 
     stationLayer.clearLayers();
     sightLinesLayer.clearLayers();
@@ -658,10 +695,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const result = game.recordVisibleTargets(visibleIds);
+
+    let badSpotExtraPenalty = 0;
+    if (!result.stageCompleted && visibleIds.length === 0) {
+      badSpotExtraPenalty = 4;
+      game.applyExtraTimePenalty(badSpotExtraPenalty);
+      flashTimerPenalty();
+      playErrorSound();
+    }
+
     updateHUD(game.getState());
+    if (!game.getState().isGameActive) {
+      isProcessingClick = false;
+      triggerGameOver(false);
+      return;
+    }
+
     renderTargetMarkersAndList(stage, result.readSet, statusMap, firstProblemIndex);
 
-    buildSimpleCoaching(groundHeight, visibleIds, blockedDetails, farDetails, highestObstacle, result);
+    const totalTurnTimeLoss = deployInfo.timePenalty + badSpotExtraPenalty;
+    buildSimpleCoaching(groundHeight, visibleIds, blockedDetails, farDetails, highestObstacle, result, totalTurnTimeLoss);
 
     profileSelector.disabled = false;
     profileSelector.value = String(firstProblemIndex);
@@ -693,23 +746,25 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 1150);
     } else {
       if (result.newlyReadCount > 0) playTargetSuccessSound();
-      const penaltyTxt = deployInfo.timePenalty ? ` (-${deployInfo.timePenalty}s)` : "";
-      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Check the Coach box on the left!`);
+      const penaltyTxt = totalTurnTimeLoss > 0 ? ` (⏱️ -${totalTurnTimeLoss}s)` : "";
+      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Check the surveyor's bubble!`, totalTurnTimeLoss >= 8 ? "error" : "info");
     }
 
     isProcessingClick = false;
   });
 
-  function buildSimpleCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
+  function buildSimpleCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result, timeLost) {
+    const timeTag = timeLost > 0 ? ` <strong>[-${timeLost}s]</strong>` : "";
+
     if (result.stageCompleted) {
-      setFeedback(`🔥 <strong>Bullseye (${Math.round(height)} m)!</strong> All 3 targets measured!`, "good");
+      setFeedback(`“Bullseye at ${Math.round(height)} m! All 3 prisms locked—great surveying!”`, "good");
       return;
     }
 
     if (farDetails.length > 0) {
       const f = farDetails[0];
       setFeedback(
-        `⚠️ <strong>Too far from ${f.id}!</strong> Move <strong>${f.dir}</strong> toward the center.`,
+        `“${f.id} is out of laser range!${timeTag} Move <strong>${f.dir}</strong> toward the center.”`,
         "warn"
       );
       return;
@@ -720,17 +775,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (visibleIds.length === 2) {
       setFeedback(
-        `🔥 <strong>VERY HOT (2/3)!</strong> Almost there! Click a slightly higher spot (<strong>>${recommendedHeight} m</strong>) toward <strong>${dirHint}</strong>.`,
+        `“So close (2/3)!${timeTag} Step onto higher ground (<strong>>${recommendedHeight} m</strong>) toward <strong>${dirHint}</strong>.”`,
         "good"
       );
     } else if (visibleIds.length === 1) {
       setFeedback(
-        `🌤️ <strong>WARM (1/3)!</strong> A hill blocks the rest. Pick higher ground (<strong>>${recommendedHeight} m</strong>) to the <strong>${dirHint}</strong>.`,
+        `“Only 1/3 visible—a ridge blocks our beam!${timeTag} Climb higher (<strong>>${recommendedHeight} m</strong>) to the <strong>${dirHint}</strong>.”`,
         "warn"
       );
     } else {
       setFeedback(
-        `❄️ <strong>COLD (0/3)!</strong> Too low—hills block your laser. Click a higher hill (<strong>>${recommendedHeight} m</strong>) to the <strong>${dirHint}</strong>.`,
+        `“We're too low here (0/3)!${timeTag} Pick a hill above <strong>${recommendedHeight} m</strong> toward <strong>${dirHint}</strong>.”`,
         "bad"
       );
     }

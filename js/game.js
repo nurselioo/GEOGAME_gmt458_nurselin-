@@ -1,6 +1,6 @@
 /**
  * js/game.js
- * Game state management, scoring, timer, lives, and stage progression logic
+ * Game state management, scoring, timer, lives, and heightened time penalties for wrong setups
  */
 
 const HIGH_SCORE_STORAGE_KEY = "toporush_high_score_v1";
@@ -113,13 +113,26 @@ function createGameEngine(stages) {
     state.stationCountInStage += 1;
     let timePenalty = 0;
     if (state.stationCountInStage > 1) {
-      timePenalty = 3;
-      state.timeLeft = Math.max(1, state.timeLeft - timePenalty);
+      timePenalty = Math.min(12, 6 + (state.stationCountInStage - 2) * 2);
+      state.timeLeft = Math.max(0, state.timeLeft - timePenalty);
+      if (state.timeLeft === 0) {
+        stopGame();
+        if (onGameOverCallback) onGameOverCallback(false);
+      }
     }
     return {
       deployCount: state.stationCountInStage,
       timePenalty
     };
+  }
+
+  function applyExtraTimePenalty(seconds) {
+    state.timeLeft = Math.max(0, state.timeLeft - seconds);
+    if (state.timeLeft === 0) {
+      stopGame();
+      if (onGameOverCallback) onGameOverCallback(false);
+    }
+    return state.timeLeft;
   }
 
   function recordVisibleTargets(visibleTargetIds) {
@@ -161,10 +174,11 @@ function createGameEngine(stages) {
 
   function penalizeInvalidPlacement() {
     state.lives = Math.max(0, state.lives - 1);
-    if (state.lives === 0) {
+    state.timeLeft = Math.max(0, state.timeLeft - 10);
+    if (state.lives === 0 || state.timeLeft === 0) {
       stopGame();
     }
-    return state.lives;
+    return { lives: state.lives, timeLeft: state.timeLeft, timePenalty: 10 };
   }
 
   function advanceToNextStage() {
@@ -200,6 +214,7 @@ function createGameEngine(stages) {
     resumeTimer,
     getCurrentStage,
     registerStationDeployment,
+    applyExtraTimePenalty,
     recordVisibleTargets,
     addBonusScore,
     penalizeInvalidPlacement,

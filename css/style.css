@@ -245,58 +245,149 @@ body {
   color: #fff;
 }
 
-/* --- LEFT-SIDE FLOATING HOT/COLD STATION COACH BOX --- */
-.map-coach-floating {
+/* --- LEFT-SIDE HARD-HAT SURVEYOR WITH DIALOGUE SPEECH BUBBLE ABOVE HEAD --- */
+.surveyor-coach-widget {
   position: absolute;
   top: 72px;
   left: 16px;
-  width: 315px;
+  width: 335px;
   max-width: calc(100% - 32px);
   z-index: 940;
-  background: rgba(27, 16, 34, 0.94);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--accent-pink);
-  border-radius: 12px;
-  padding: 11px 13px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(236, 72, 153, 0.25);
-  transition: transform 0.2s ease, border-color 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: none;
 }
 
-.coach-float-header {
+.speech-bubble-box {
+  pointer-events: auto;
+  position: relative;
+  width: 100%;
+  background: rgba(27, 16, 34, 0.96);
+  backdrop-filter: blur(10px);
+  border: 2px solid var(--accent-pink);
+  border-radius: 16px;
+  padding: 11px 14px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 16px rgba(236, 72, 153, 0.28);
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.2s ease;
+}
+
+.speech-bubble-box.good {
+  border-color: var(--accent-green);
+  background: rgba(16, 40, 34, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 18px rgba(16, 185, 129, 0.35);
+}
+
+.speech-bubble-box.warn {
+  border-color: var(--accent-amber);
+  background: rgba(42, 28, 16, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 18px rgba(251, 191, 36, 0.32);
+}
+
+.speech-bubble-box.bad {
+  border-color: var(--accent-red);
+  background: rgba(46, 15, 28, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 18px rgba(244, 63, 94, 0.38);
+}
+
+.bubble-top-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 7px;
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--accent-pink-light);
+  margin-bottom: 6px;
 }
 
-.map-coach-floating .feedback-box {
-  margin-top: 0;
-  padding: 9px 11px;
-  border-radius: 8px;
-  background: rgba(19, 11, 24, 0.88);
-  border-left: 4px solid var(--accent-pink);
-  font-size: 0.81rem;
+.speaker-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #facc15;
+}
+
+.speech-bubble-text {
+  font-size: 0.83rem;
   line-height: 1.44;
   color: var(--text-main);
 }
 
-.map-coach-floating .feedback-box.good {
-  border-left-color: var(--accent-green);
-  background: rgba(16, 185, 129, 0.18);
+/* Comic Dialogue Tail Pointing Down Toward Engineer's Hard Hat */
+.speech-bubble-tail {
+  position: absolute;
+  bottom: -11px;
+  left: 34px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 11px solid var(--accent-pink);
+  transition: border-top-color 0.25s ease;
 }
 
-.map-coach-floating .feedback-box.warn {
-  border-left-color: var(--accent-amber);
-  background: rgba(251, 191, 36, 0.18);
+.speech-bubble-tail::after {
+  content: "";
+  position: absolute;
+  top: -13px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 9px solid #1b1022;
 }
 
-.map-coach-floating .feedback-box.bad {
-  border-left-color: var(--accent-red);
-  background: rgba(244, 63, 94, 0.2);
+.speech-bubble-box.good .speech-bubble-tail {
+  border-top-color: var(--accent-green);
+}
+.speech-bubble-box.good .speech-bubble-tail::after {
+  border-top-color: #102822;
+}
+
+.speech-bubble-box.warn .speech-bubble-tail {
+  border-top-color: var(--accent-amber);
+}
+.speech-bubble-box.warn .speech-bubble-tail::after {
+  border-top-color: #2a1c10;
+}
+
+.speech-bubble-box.bad .speech-bubble-tail {
+  border-top-color: var(--accent-red);
+}
+.speech-bubble-box.bad .speech-bubble-tail::after {
+  border-top-color: #2e0f1c;
+}
+
+/* Engineer Character Directly Below Speech Bubble */
+.surveyor-avatar-row {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  margin-left: 6px;
+}
+
+.surveyor-avatar-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.7));
+  animation: engineerBob 2.8s ease-in-out infinite;
+}
+
+@keyframes engineerBob {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+.surveyor-role-pill {
+  background: rgba(27, 16, 34, 0.92);
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  color: #fde047;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 /* Bottom Map Floating Bar */
@@ -1034,7 +1125,7 @@ body {
   body { overflow: auto; height: auto; }
   .game-container { grid-template-columns: 1fr; height: auto; }
   .map-wrapper { height: 55vh; }
-  .map-coach-floating { width: 260px; }
+  .surveyor-coach-widget { width: 270px; }
 }
 
 @media (max-width: 640px) {
