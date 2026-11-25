@@ -1,6 +1,6 @@
 /**
  * js/app.js
- * Leaflet map, Verified Wikimedia Region Photos,
+ * Leaflet map, Guaranteed Instant Landmark Artwork + Official Wikipedia Landmark Photos,
  * Left-Side Floating Hot/Cold Coach, Dynamic Next-Move Terrain & Laser Analyzer,
  * 3D Side-View Relief Block Model, Shuffled Regional Quizzes,
  * and Victory Screen with Hard-Hat Surveyor + Full 3D Elevation Relief Map of Turkey
@@ -10,37 +10,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const game = createGameEngine(GAME_STAGES);
 
   // =========================================================================
-  // PRELOAD VERIFIED WIKIMEDIA COMMONS PHOTOS FOR ALL 6 REGIONS
+  // OFFICIAL WIKIPEDIA LANDMARK PHOTO RESOLVER + INSTANT BUILT-IN FALLBACK
   // =========================================================================
   const resolvedPhotoUrls = {};
 
-  async function resolveCommonsPhoto(stage) {
+  async function resolveOfficialLandmarkPhoto(stage) {
     if (resolvedPhotoUrls[stage.id]) return resolvedPhotoUrls[stage.id];
+    const fallbackSvg = getBuiltInRegionArtworkDataUrl(stage.reliefType);
     try {
-      const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(
-        stage.commonsFile
-      )}&prop=imageinfo&iiprop=url&iiurlwidth=1000&format=json&origin=*`;
+      const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(stage.wikiTitle)}`;
       const resp = await fetch(apiUrl);
       if (resp.ok) {
         const data = await resp.json();
-        const pages = data?.query?.pages || {};
-        const firstPage = Object.values(pages)[0];
-        const info = firstPage?.imageinfo?.[0];
-        const bestUrl = info?.thumburl || info?.url;
-        if (bestUrl) {
-          resolvedPhotoUrls[stage.id] = bestUrl;
-          return bestUrl;
+        const imgUrl = data?.originalimage?.source || data?.thumbnail?.source;
+        if (imgUrl) {
+          resolvedPhotoUrls[stage.id] = imgUrl;
+          return imgUrl;
         }
       }
     } catch (e) {
-      // Fall back to Special:FilePath URL
+      // Offline or blocked: use built-in landmark illustration
     }
-    resolvedPhotoUrls[stage.id] = stage.photo;
-    return stage.photo;
+    resolvedPhotoUrls[stage.id] = fallbackSvg;
+    return fallbackSvg;
   }
 
   GAME_STAGES.forEach((st) => {
-    resolveCommonsPhoto(st).then((url) => {
+    resolveOfficialLandmarkPhoto(st).then((url) => {
       const img = new Image();
       img.src = url;
     });
@@ -284,29 +280,22 @@ document.addEventListener("DOMContentLoaded", () => {
     hudHighscore.textContent = state.highScore;
   }
 
-  // Flicker-Free Verified Region Photo Loader
+  // Instant Landmark Artwork + Official Wikipedia Photo Upgrade (NEVER blank!)
   async function openStageBriefing(stage) {
     game.pauseTimer();
 
     const state = game.getState();
     const photoEl = document.getElementById("briefing-photo");
+    const builtInArt = getBuiltInRegionArtworkDataUrl(stage.reliefType);
 
-    photoEl.classList.remove("loaded");
-    photoEl.removeAttribute("src");
-
-    const finalUrl = await resolveCommonsPhoto(stage);
-    photoEl.onload = () => {
-      photoEl.classList.add("loaded");
-    };
+    // 1. Immediately display the crisp built-in regional landmark artwork so it is NEVER empty
+    photoEl.onload = () => photoEl.classList.add("loaded");
     photoEl.onerror = () => {
-      if (photoEl.src !== stage.photo) {
-        photoEl.src = stage.photo;
-      }
-    };
-    photoEl.src = finalUrl;
-    if (photoEl.complete && photoEl.naturalWidth > 0) {
+      photoEl.src = builtInArt;
       photoEl.classList.add("loaded");
-    }
+    };
+    photoEl.src = builtInArt;
+    photoEl.classList.add("loaded");
 
     document.getElementById("briefing-badge").textContent = `STAGE ${state.stageNumber} / ${state.totalStages} • ${stage.difficulty.toUpperCase()}`;
     document.getElementById("briefing-title").textContent = stage.name;
@@ -322,6 +311,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     briefingModal.classList.remove("hidden");
+
+    // 2. Seamlessly upgrade to the real Wikipedia photograph once preloaded in memory
+    const realPhotoUrl = await resolveOfficialLandmarkPhoto(stage);
+    if (realPhotoUrl && realPhotoUrl !== builtInArt && game.getCurrentStage().id === stage.id) {
+      const preloader = new Image();
+      preloader.onload = () => {
+        if (game.getCurrentStage().id === stage.id) {
+          photoEl.src = realPhotoUrl;
+          photoEl.classList.add("loaded");
+        }
+      };
+      preloader.src = realPhotoUrl;
+    }
   }
 
   document.getElementById("btn-close-briefing").addEventListener("click", () => {

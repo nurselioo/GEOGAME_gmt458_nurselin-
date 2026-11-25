@@ -1,7 +1,7 @@
 /**
  * js/data.js
- * 6 Study regions in Turkey with verified Wikimedia Commons landmark photography,
- * simplified coach hints, relief profile types, and randomized-choice geography quizzes
+ * 6 Study regions in Turkey with official Wikipedia article thumbnails +
+ * instant built-in regional landscape artwork (never blank, never wrong landmark)
  */
 
 const GAME_STAGES = [
@@ -11,8 +11,7 @@ const GAME_STAGES = [
     cityLabel: "NEVSEHIR • CAPPADOCIA RELIEF",
     reliefType: "cappadocia",
     difficulty: "Easy",
-    commonsFile: "File:Cappadocia_chimneys_timeline.jpg",
-    photo: "https://commons.wikimedia.org/wiki/Special:FilePath/Cappadocia_chimneys_timeline.jpg?width=1000",
+    wikiTitle: "Göreme",
     center: [38.6455, 34.8325],
     zoom: 14,
     maxRange: 3800,
@@ -42,8 +41,7 @@ const GAME_STAGES = [
     cityLabel: "AKSARAY • TUZ GOLU BASIN",
     reliefType: "saltlake",
     difficulty: "Easy",
-    commonsFile: "File:Tuz_Gölü_3.jpg",
-    photo: "https://commons.wikimedia.org/wiki/Special:FilePath/Tuz_G%C3%B6l%C3%BC_3.jpg?width=1000",
+    wikiTitle: "Lake_Tuz",
     center: [38.3950, 33.9950],
     zoom: 14,
     maxRange: 4000,
@@ -73,8 +71,7 @@ const GAME_STAGES = [
     cityLabel: "BURSA • ULUDAG MASSIF",
     reliefType: "uludag",
     difficulty: "Medium",
-    commonsFile: "File:Uludağ_Bursa.jpg",
-    photo: "https://commons.wikimedia.org/wiki/Special:FilePath/Uluda%C4%9F_Bursa.jpg?width=1000",
+    wikiTitle: "Uludağ",
     center: [40.1045, 29.1330],
     zoom: 14,
     maxRange: 3800,
@@ -104,8 +101,7 @@ const GAME_STAGES = [
     cityLabel: "DENIZLI • PAMUKKALE TERRACES",
     reliefType: "pamukkale",
     difficulty: "Medium",
-    commonsFile: "File:Pamukkale_02.jpg",
-    photo: "https://commons.wikimedia.org/wiki/Special:FilePath/Pamukkale_02.jpg?width=1000",
+    wikiTitle: "Pamukkale",
     center: [37.9240, 29.1230],
     zoom: 14,
     maxRange: 3800,
@@ -135,8 +131,7 @@ const GAME_STAGES = [
     cityLabel: "RIZE • AYDER & FIRTINA VALLEY",
     reliefType: "ayder",
     difficulty: "Hard",
-    commonsFile: "File:Ayder_yaylası.jpg",
-    photo: "https://commons.wikimedia.org/wiki/Special:FilePath/Ayder_yaylas%C4%B1.jpg?width=1000",
+    wikiTitle: "Ayder,_Çamlıhemşin",
     center: [40.9525, 41.1050],
     zoom: 14,
     maxRange: 3600,
@@ -166,8 +161,7 @@ const GAME_STAGES = [
     cityLabel: "BITLIS • NEMRUT CRATER CALDERA",
     reliefType: "nemrut",
     difficulty: "Expert",
-    commonsFile: "File:Nemrut_crater_lake.jpg",
-    photo: "https://commons.wikimedia.org/wiki/Special:FilePath/Nemrut_crater_lake.jpg?width=1000",
+    wikiTitle: "Mount_Nemrut_(volcano)",
     center: [38.6200, 42.2420],
     zoom: 13,
     maxRange: 4200,
@@ -193,6 +187,135 @@ const GAME_STAGES = [
     }
   }
 ];
+
+/**
+ * Generates an instant, crisp SVG data-URI landscape illustration for each of the 6 regions
+ * so the briefing frame is NEVER blank and always shows the exact Turkish landmark.
+ */
+function getBuiltInRegionArtworkDataUrl(reliefType) {
+  let svg = "";
+  switch (reliefType) {
+    case "cappadocia":
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f97316"/><stop offset="55%" stop-color="#fdba74"/><stop offset="100%" stop-color="#fef3c7"/></linearGradient>
+          <linearGradient id="tuff" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#9a3412"/></linearGradient>
+        </defs>
+        <rect width="800" height="340" fill="url(#sky)"/>
+        <circle cx="630" cy="82" r="34" fill="#fff7ed" opacity="0.85"/>
+        <path d="M0 245 Q200 195 420 230 T800 210 L800 340 L0 340 Z" fill="#b45309"/>
+        <!-- Fairy Chimneys -->
+        <path d="M95 310 L118 145 L142 310 Z" fill="url(#tuff)"/><ellipse cx="118" cy="143" rx="16" ry="8" fill="#7c2d12"/>
+        <path d="M155 315 L186 112 L218 315 Z" fill="url(#tuff)"/><ellipse cx="186" cy="110" rx="20" ry="10" fill="#7c2d12"/>
+        <path d="M235 310 L254 168 L275 310 Z" fill="url(#tuff)"/><ellipse cx="254" cy="166" rx="13" ry="7" fill="#7c2d12"/>
+        <path d="M510 315 L542 125 L574 315 Z" fill="url(#tuff)"/><ellipse cx="542" cy="123" rx="19" ry="9" fill="#7c2d12"/>
+        <path d="M590 315 L614 162 L638 315 Z" fill="url(#tuff)"/><ellipse cx="614" cy="160" rx="14" ry="7" fill="#7c2d12"/>
+        <!-- Hot air balloons -->
+        <ellipse cx="345" cy="96" rx="18" ry="22" fill="#ec4899"/><rect x="340" y="120" width="10" height="6" fill="#78350f"/>
+        <ellipse cx="445" cy="74" rx="13" ry="16" fill="#38bdf8"/><rect x="441" y="92" width="8" height="5" fill="#78350f"/>
+        <path d="M0 285 Q240 265 480 290 T800 278 L800 340 L0 340 Z" fill="#78350f"/>
+      </svg>`;
+      break;
+    case "saltlake":
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340">
+        <defs>
+          <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0284c7"/><stop offset="65%" stop-color="#7dd3fc"/><stop offset="100%" stop-color="#e0f2fe"/></linearGradient>
+          <linearGradient id="salt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#f1f5f9"/><stop offset="100%" stop-color="#cbd5e1"/></linearGradient>
+        </defs>
+        <rect width="800" height="340" fill="url(#sky2)"/>
+        <!-- Distant Hasan Dagi silhouette -->
+        <path d="M470 185 L585 112 L645 135 L725 185 Z" fill="#94a3b8" opacity="0.65"/>
+        <!-- Wide white salt lake horizon -->
+        <rect x="0" y="182" width="800" height="158" fill="url(#salt)"/>
+        <!-- Polygonal salt crust cracks -->
+        <g stroke="#94a3b8" stroke-width="1.4" fill="none" opacity="0.55">
+          <path d="M40 230 L130 220 L195 242 L115 262 Z"/>
+          <path d="M195 242 L310 225 L380 250 L270 272 Z"/>
+          <path d="M380 250 L500 232 L590 258 L475 280 Z"/>
+          <path d="M115 262 L270 272 L230 315 L75 305 Z"/>
+          <path d="M475 280 L650 268 L740 302 L560 322 Z"/>
+        </g>
+        <!-- Mirror reflection pool -->
+        <ellipse cx="400" cy="204" rx="290" ry="12" fill="#bae6fd" opacity="0.65"/>
+      </svg>`;
+      break;
+    case "uludag":
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340">
+        <defs>
+          <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1d4ed8"/><stop offset="100%" stop-color="#93c5fd"/></linearGradient>
+        </defs>
+        <rect width="800" height="340" fill="url(#sky3)"/>
+        <!-- Steep snowy Uludag summit -->
+        <path d="M0 280 L190 135 L365 56 L530 128 L800 265 L800 340 L0 340 Z" fill="#475569"/>
+        <!-- Snow cap -->
+        <path d="M190 135 L365 56 L530 128 L470 158 L420 132 L365 168 L305 134 L250 162 Z" fill="#f8fafc"/>
+        <!-- Pine forest slopes -->
+        <path d="M0 245 Q240 205 460 240 T800 225 L800 340 L0 340 Z" fill="#14532d"/>
+        <g fill="#052e16">
+          <polygon points="90,265 106,215 122,265"/><polygon points="145,275 164,218 183,275"/>
+          <polygon points="240,268 258,212 276,268"/><polygon points="560,264 580,206 600,264"/>
+          <polygon points="645,274 664,218 683,274"/><polygon points="710,262 726,214 742,262"/>
+        </g>
+      </svg>`;
+      break;
+    case "pamukkale":
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340">
+        <defs>
+          <linearGradient id="sky4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0369a1"/><stop offset="100%" stop-color="#bae6fd"/></linearGradient>
+        </defs>
+        <rect width="800" height="340" fill="url(#sky4)"/>
+        <!-- Green Denizli valley background -->
+        <path d="M0 165 Q400 130 800 165 L800 340 L0 340 Z" fill="#15803d"/>
+        <!-- Stepped White Travertine Terraces & Turquoise Thermal Pools -->
+        <path d="M70 165 Q400 145 730 165 L765 215 Q400 198 35 215 Z" fill="#f8fafc"/>
+        <ellipse cx="260" cy="184" rx="95" ry="13" fill="#38bdf8"/>
+        <ellipse cx="530" cy="186" rx="105" ry="13" fill="#38bdf8"/>
+        <path d="M35 215 Q400 198 765 215 L790 272 Q400 255 10 272 Z" fill="#f1f5f9"/>
+        <ellipse cx="195" cy="240" rx="115" ry="15" fill="#0ea5e9"/>
+        <ellipse cx="430" cy="242" rx="110" ry="15" fill="#38bdf8"/>
+        <ellipse cx="645" cy="240" rx="90" ry="14" fill="#0ea5e9"/>
+        <path d="M10 272 Q400 255 790 272 L800 340 L0 340 Z" fill="#e2e8f0"/>
+        <ellipse cx="330" cy="304" rx="145" ry="17" fill="#38bdf8"/>
+        <ellipse cx="595" cy="306" rx="120" ry="16" fill="#0ea5e9"/>
+      </svg>`;
+      break;
+    case "ayder":
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340">
+        <defs>
+          <linearGradient id="sky5" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#e0f2fe"/></linearGradient>
+        </defs>
+        <rect width="800" height="340" fill="url(#sky5)"/>
+        <!-- Steep V-shaped Kackar mountain walls -->
+        <polygon points="0,75 410,275 0,340" fill="#166534"/>
+        <polygon points="800,65 390,275 800,340" fill="#15803d"/>
+        <!-- Misty highland clouds -->
+        <ellipse cx="220" cy="145" rx="110" ry="22" fill="#ffffff" opacity="0.65"/>
+        <ellipse cx="590" cy="135" rx="120" ry="24" fill="#ffffff" opacity="0.65"/>
+        <!-- Wooden Ayder yayla chalets -->
+        <rect x="235" y="218" width="38" height="24" fill="#92400e"/><polygon points="230,218 254,202 278,218" fill="#451a03"/>
+        <rect x="520" y="212" width="42" height="26" fill="#92400e"/><polygon points="515,212 541,195 567,212" fill="#451a03"/>
+        <!-- Firtina Creek rushing through valley bottom -->
+        <path d="M395 270 Q415 302 380 340 L435 340 Q450 302 415 270 Z" fill="#0284c7"/>
+      </svg>`;
+      break;
+    case "nemrut":
+    default:
+      svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 340">
+        <defs>
+          <linearGradient id="sky6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#6366f1"/></linearGradient>
+        </defs>
+        <rect width="800" height="340" fill="url(#sky6)"/>
+        <!-- Caldera volcanic rim -->
+        <path d="M0 220 L135 125 L310 155 L520 142 L685 118 L800 215 L800 340 L0 340 Z" fill="#3f3f46"/>
+        <path d="M80 235 Q400 185 720 235 L760 340 L40 340 Z" fill="#27272a"/>
+        <!-- Deep blue Nemrut Crater Lake inside caldera -->
+        <ellipse cx="400" cy="248" rx="265" ry="48" fill="#0284c7" stroke="#38bdf8" stroke-width="3"/>
+        <ellipse cx="385" cy="244" rx="190" ry="26" fill="#0369a1" opacity="0.7"/>
+      </svg>`;
+      break;
+  }
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
 
 async function fetchElevationProfile(points) {
   const locationsPayload = points.map(p => ({ latitude: p.lat, longitude: p.lng }));
