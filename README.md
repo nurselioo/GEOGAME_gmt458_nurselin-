@@ -1,8 +1,6 @@
+>  **🔗 Live Web Application Link:**   https://nurselioo.github.io/GEOGAME_gmt458_nurselin-/
+
 # 🌍 TOPO-RUSH: Total Station Elevation & Line-of-Sight GeoGame
-
-
->  **🔗 Live Web Application Link:**  
-> 
 
 🎯 **Objective of the game :** In the real world, a "total station"—an instrument used for topographic surveying—measures beams reflected from three target prisms (M1, M2, and M3). If a terrain feature—such as a ridge, a valley slope, or any other obstacle—lies along the direct laser path between the instrument and a target, the measurement is obstructed.
 
