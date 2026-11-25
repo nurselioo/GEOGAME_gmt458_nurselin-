@@ -61,11 +61,14 @@ The interface uses a full-viewport split-screen GIS dashboard (`1fr 425px` CSS G
 |                                               | [ Chart.js Profile ]  |
 |   [ Toast Hint ]  [ View 3D Relief ➔ ]        | Clearance | Min Z     |
 +-----------------------------------------------+-----------------------+
+```
 
+---
 
 ## 3. Game Progression, Tasks, Lives, Scoring & Temporal Mechanics
 
 ### Progression & Tasks (6 Stages • 18 Survey Targets • 6 Topography Quizzes)
+
 Players progress through **6 increasingly complex regions of Turkey** (`Easy` ➔ `Expert`). Each stage requires measuring **3 prism targets ($M1, M2, M3$)** via unobstructed Line-of-Sight (LoS) and answering **1 regional topography question** (**24 total tasks**):
 
 | Stage | Region & Province | Difficulty | Topographic Challenge |
@@ -78,6 +81,7 @@ Players progress through **6 increasingly complex regions of Turkey** (`Easy` �
 | **6** | Nemrut Caldera – Tatvan (Bitlis) | Expert | Volcanic caldera lake hazard zone + steep crater rim |
 
 ### Lives, Scoring & High-Score Mechanism
+
 * **Lives (`♥ ♥ ♥`):** Players start with **3 lives**. Clicking outside the pink survey box or inside water (e.g., Nemrut Crater Lake) deducts **1 life** and **10 seconds**.
 * **Scoring & High Score:**
   * **+100 pts** per measured target ($M1, M2, M3$) and **+100 pts** per correct topography quiz answer.
@@ -86,35 +90,47 @@ Players progress through **6 increasingly complex regions of Turkey** (`Easy` �
   * All-time high score is persisted automatically via `localStorage` (`toporush_high_score_v1`) and shown in the HUD (`BEST`).
 
 ### Temporal Component
+
 * **90-Second Countdown (`01:30`):** Time actively drives risk-reward decisions.
 * **Penalties & Bonuses:** Relocating the Total Station costs **-6s** (increasing by `-2s` per repeated setup in the same stage); a `0/3` visibility placement costs an extra **-4s**; out-of-bounds/water clicks cost **-10s**; clearing a stage adds **+20s**.
+
+---
 
 ## 4. JavaScript Libraries & Open Datasets
 
 ### JavaScript Libraries
+
 * **Leaflet.js (`v1.9.4`):** Interactive Web GIS map, custom SVG markers, animated laser rays, survey boundaries, and water hazard zones.
 * **Chart.js (`v4.x`):** Real-time terrain elevation cross-section profile overlaid with the dashed laser line-of-sight vector and red blocking-ridge markers.
 * **Turf.js (`v6`):** Geodesic distance calculations (`turf.distance`) for instrument range and lake hazard validation.
 * **HTML5 Canvas 2D & Web Audio API:** Renders the post-stage 3D isometric city relief block models, the victory screen **3D Relief Map of Turkey**, and procedural audio feedback.
 
 ### Openly Available Datasets
-* **OpenTopoMap (SRTM Contours):** Topographic basemap tiles .
+
+* **OpenTopoMap (SRTM Contours):** Topographic basemap tiles (`https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png`).
 * **Esri World Imagery:** High-resolution satellite basemap layer.
-* **Open-Elevation API (SRTM DEM):** Elevation sampling  along 12-point transects per target.
+* **Open-Elevation API (SRTM DEM):** Elevation sampling (`[https://api.open-elevation.com/api/v1/lookup](https://api.open-elevation.com/api/v1/lookup)`) along 12-point transects per target.
 * **Wikipedia REST API:** Fetches verified landmark photography for each stage briefing modal.
+
+---
 
 ## 5. Implementation Details
 
 ### Three Key Event Handlers (`js/app.js`)
+
 1. **`map.on("click", async (e) => { ... })`:** Validates survey boundaries and water hazards (`turf.distance`), fetches DEM elevations for 36 transect points, computes Line-of-Sight clearance, draws laser rays, and updates score/time penalties.
 2. **`map.on("mousemove", (e) => { ... })`:** Tracks cursor coordinates across the map and updates `#cursor-elev-badge` (`Cursor: ~1245 m`) in real time.
 3. **`profileSelector.addEventListener("change", (e) => { ... })`:** Switches the inspected target ray (`M1–M3`) in the Chart.js elevation profile and updates required hill height metrics.
 
 ### Use of Closures (`js/game.js`)
+
 `createGameEngine(stages)` encapsulates private game state (`state`, `timerInterval`, callbacks) inside a lexical closure so external scripts cannot mutate `score`, `lives`, or `timeLeft` directly. Instead, it exposes controlled methods (`startNewGame`, `registerStationDeployment`, `recordVisibleTargets`, `penalizeInvalidPlacement`, `advanceToNextStage`, `getState`) that retain access to the private state across asynchronous timer ticks and map events.
 
 ### DOM Interaction (`js/app.js`)
+
 * **HUD & Telemetry:** `updateHUD()` updates `#hud-stage`, `#hud-timer`, `#hud-lives`, `#hud-score`, and `#hud-highscore` every second and toggles `.timer-danger` below 15 seconds.
 * **Target List & Surveyor Speech Bubble:** `renderTargetMarkersAndList()` dynamically builds `<li>` target status items, while `setFeedback()` updates `#speech-bubble-text`, swaps `.good` / `.warn` / `.bad` bubble styles, and modifies the SVG `<path id="engineer-mouth">` expression.
 * **Modals & Quizzes:** `openStageBriefing()` and `setupStageQuiz()` dynamically populate landmark photos, target descriptions, and shuffled quiz buttons (`document.createElement("button")`).
+
+---
 
