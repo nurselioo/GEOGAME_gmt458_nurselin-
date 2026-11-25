@@ -57,7 +57,7 @@
 
   <!-- MAIN GAME AREA -->
   <main class="game-container">
-    <!-- LEFT PANEL: INTERACTIVE MAP -->
+    <!-- LEFT PANEL: INTERACTIVE MAP + FLOATING HOT/COLD COACH -->
     <section class="map-wrapper">
       <div id="map"></div>
 
@@ -74,6 +74,17 @@
         </div>
       </div>
 
+      <!-- LEFT-SIDE FLOATING HOT/COLD COACH BOX -->
+      <div class="map-coach-floating">
+        <div class="coach-float-header">
+          <span>📡 STATION COACH</span>
+          <span id="cursor-elev-badge" class="badge-pill">Cursor: -- m</span>
+        </div>
+        <div id="station-feedback-box" class="feedback-box">
+          💡 Click on a high hill inside the pink box!
+        </div>
+      </div>
+
       <!-- Bottom Map Hint Banner + Floating Next Stage Button -->
       <div class="map-bottom-bar">
         <div id="toast-banner" class="toast-banner">
@@ -85,33 +96,27 @@
       </div>
     </section>
 
-    <!-- RIGHT PANEL: SIMPLE SURVEY GUIDE & GRAPH -->
+    <!-- RIGHT PANEL: TELEMETRY, TARGETS & DYNAMIC LINE-OF-SIGHT ANALYZER -->
     <aside class="side-panel">
-      <!-- 1. Station Report & Simple Coach -->
+      <!-- 1. Compact Station Telemetry -->
       <div class="panel-card station-card">
         <div class="card-header">
-          <h2>📡 STATION COACH</h2>
-          <span id="cursor-elev-badge" class="badge-pill">Cursor: -- m</span>
+          <h2>📐 SURVEY TELEMETRY</h2>
+          <span class="small-text">Dry High Ground Rule</span>
         </div>
         <div class="station-stats">
           <div>
-            <span class="stat-lbl">Your Height</span>
+            <span class="stat-lbl">Station Z</span>
             <strong id="station-elev" class="mono">-- m</strong>
           </div>
           <div>
-            <span class="stat-lbl">Moves Used</span>
+            <span class="stat-lbl">Setups</span>
             <strong id="station-count" class="mono">0</strong>
           </div>
           <div>
-            <span class="stat-lbl">Progress</span>
+            <span class="stat-lbl">Measured</span>
             <strong id="targets-progress" class="mono">0 / 3</strong>
           </div>
-        </div>
-        <div id="station-feedback-box" class="feedback-box">
-          💡 Click on a high hill inside the pink box!
-        </div>
-        <div class="surveying-principle-note">
-          🧭 <strong>Quick Rule:</strong> Pick <strong>dry high ground</strong> so hills don't block your laser. Never click on water.
         </div>
       </div>
 
@@ -119,28 +124,40 @@
       <div class="panel-card targets-card">
         <div class="card-header">
           <h2>🎯 TARGETS (M1 - M3)</h2>
-          <span class="small-text">Click to view profile</span>
+          <span class="small-text">Click to inspect ray</span>
         </div>
         <ul id="target-list" class="target-list">
           <!-- Filled by JavaScript -->
         </ul>
       </div>
 
-      <!-- 3. Simple Side-View Elevation Chart -->
+      <!-- 3. Dynamic Line-of-Sight & Next-Point Elevation Analyzer -->
       <div class="panel-card chart-card">
         <div class="card-header">
-          <h2>📈 SIDE VIEW (GROUND VS LASER)</h2>
+          <h2>📈 DYNAMIC TERRAIN & LASER RAY</h2>
           <select id="profile-selector" class="profile-select" disabled>
-            <option value="0">View M1</option>
-            <option value="1">View M2</option>
-            <option value="2">View M3</option>
+            <option value="0">Ray ➔ M1</option>
+            <option value="1">Ray ➔ M2</option>
+            <option value="2">Ray ➔ M3</option>
           </select>
         </div>
+
+        <!-- Live Next-Point Guidance Strip -->
+        <div id="chart-guidance-strip" class="chart-guidance-strip">
+          <span>🎯 <strong>Next Pick Guide:</strong> Place your station to inspect terrain clearance.</span>
+        </div>
+
         <div class="chart-container">
           <canvas id="elevationChart"></canvas>
         </div>
+
+        <div class="chart-metrics-row">
+          <span id="metric-clearance">Clearance: --</span>
+          <span id="metric-req-elev">Min Hill Needed: --</span>
+        </div>
+
         <p id="los-status-text" class="los-note">
-          Dashed line = Laser. If pink ground goes above it, a hill blocks your view.
+          Dashed line = Laser beam. Pick a hill higher than any ridge between you and the target.
         </p>
       </div>
     </aside>
@@ -171,7 +188,7 @@
       <ul class="rules-list">
         <li>🏔️ <strong>Pick High Ground:</strong> Higher hills give a clear laser path over valleys and ridges.</li>
         <li>🌊 <strong>Avoid Water:</strong> Tripods need solid dry ground—never click inside lakes.</li>
-        <li>🔥 <strong>Follow Simple Hints:</strong> The right panel tells you where to move next.</li>
+        <li>🔥 <strong>Left Map Coach:</strong> Watch the Hot/Cold coach box on the left side of the map for instant direction hints.</li>
         <li>⏱️ <strong>Beat the Clock:</strong> Start with <strong>90s</strong>. Moving costs <strong>-3s</strong>; finishing a region adds <strong>+20s</strong>.</li>
       </ul>
       <button id="btn-start-game" class="primary-btn large">Start Game 🚀</button>
@@ -182,7 +199,7 @@
   <div id="briefing-modal" class="modal-backdrop hidden">
     <div class="modal-content briefing-card">
       <div class="region-photo-frame">
-        <img id="briefing-photo" src="" alt="Region Landscape" />
+        <img id="briefing-photo" alt="Region Landscape" />
         <div id="briefing-badge" class="photo-badge">STAGE 1 / 6 • EASY</div>
       </div>
 

@@ -156,7 +156,7 @@ body {
 .game-container {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 415px;
+  grid-template-columns: 1fr 425px;
   height: calc(100vh - 68px);
 }
 
@@ -243,6 +243,60 @@ body {
 .layer-btn.active {
   background: var(--accent-pink);
   color: #fff;
+}
+
+/* --- LEFT-SIDE FLOATING HOT/COLD STATION COACH BOX --- */
+.map-coach-floating {
+  position: absolute;
+  top: 72px;
+  left: 16px;
+  width: 315px;
+  max-width: calc(100% - 32px);
+  z-index: 940;
+  background: rgba(27, 16, 34, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--accent-pink);
+  border-radius: 12px;
+  padding: 11px 13px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65), 0 0 14px rgba(236, 72, 153, 0.25);
+  transition: transform 0.2s ease, border-color 0.25s ease;
+}
+
+.coach-float-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--accent-pink-light);
+}
+
+.map-coach-floating .feedback-box {
+  margin-top: 0;
+  padding: 9px 11px;
+  border-radius: 8px;
+  background: rgba(19, 11, 24, 0.88);
+  border-left: 4px solid var(--accent-pink);
+  font-size: 0.81rem;
+  line-height: 1.44;
+  color: var(--text-main);
+}
+
+.map-coach-floating .feedback-box.good {
+  border-left-color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.18);
+}
+
+.map-coach-floating .feedback-box.warn {
+  border-left-color: var(--accent-amber);
+  background: rgba(251, 191, 36, 0.18);
+}
+
+.map-coach-floating .feedback-box.bad {
+  border-left-color: var(--accent-red);
+  background: rgba(244, 63, 94, 0.2);
 }
 
 /* Bottom Map Floating Bar */
@@ -338,59 +392,17 @@ body {
 }
 
 .station-stats strong {
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   color: var(--accent-pink-light);
 }
 
 .badge-pill {
-  background: rgba(236, 72, 153, 0.2);
+  background: rgba(236, 72, 153, 0.22);
   color: var(--accent-pink-light);
   padding: 2px 10px;
   border-radius: 999px;
   font-size: 0.74rem;
   font-weight: 700;
-}
-
-/* Hot/Cold Surveyor Coach Box */
-.feedback-box {
-  margin-top: 8px;
-  padding: 9px 11px;
-  border-radius: 8px;
-  background: rgba(19, 11, 24, 0.8);
-  border-left: 4px solid var(--accent-pink);
-  font-size: 0.79rem;
-  line-height: 1.44;
-  color: var(--text-main);
-}
-
-.feedback-box.good {
-  border-left-color: var(--accent-green);
-  background: rgba(16, 185, 129, 0.14);
-}
-
-.feedback-box.warn {
-  border-left-color: var(--accent-amber);
-  background: rgba(251, 191, 36, 0.14);
-}
-
-.feedback-box.bad {
-  border-left-color: var(--accent-red);
-  background: rgba(244, 63, 94, 0.14);
-}
-
-.surveying-principle-note {
-  margin-top: 7px;
-  padding: 7px 10px;
-  border-radius: 7px;
-  background: rgba(236, 72, 153, 0.09);
-  border: 1px dashed rgba(244, 114, 182, 0.35);
-  font-size: 0.73rem;
-  line-height: 1.38;
-  color: var(--text-muted);
-}
-
-.surveying-principle-note strong {
-  color: var(--accent-pink-light);
 }
 
 /* Target List */
@@ -414,9 +426,11 @@ body {
   cursor: pointer;
 }
 
-.target-item:hover {
+.target-item:hover,
+.target-item.active-ray {
   transform: translateX(3px);
   border-color: var(--accent-pink);
+  background: rgba(236, 72, 153, 0.14);
 }
 
 .target-item.visible-ok {
@@ -432,27 +446,71 @@ body {
   margin-right: 4px;
 }
 
-/* Simplified Chart Area */
+/* --- DYNAMIC & EDUCATIONAL CHART AREA --- */
+.chart-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-guidance-strip {
+  background: rgba(19, 11, 24, 0.78);
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.77rem;
+  line-height: 1.38;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.chart-guidance-strip.clear {
+  border-color: rgba(16, 185, 129, 0.55);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.chart-guidance-strip.blocked {
+  border-color: rgba(244, 63, 94, 0.55);
+  background: rgba(244, 63, 94, 0.14);
+}
+
 .chart-container {
   position: relative;
-  height: 135px;
+  height: 165px;
   width: 100%;
+  background: rgba(19, 11, 24, 0.45);
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.chart-metrics-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 7px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(19, 11, 24, 0.65);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent-pink-light);
 }
 
 .profile-select {
   background: var(--bg-dark);
   color: var(--text-main);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--accent-pink);
   border-radius: 6px;
   padding: 3px 8px;
   font-size: 0.76rem;
+  font-weight: 600;
 }
 
 .los-note {
   margin-top: 6px;
   font-size: 0.75rem;
   color: var(--text-muted);
-  line-height: 1.35;
+  line-height: 1.36;
 }
 
 /* Buttons */
@@ -600,12 +658,12 @@ body {
 .region-photo-frame {
   position: relative;
   width: 100%;
-  height: 205px;
+  height: 210px;
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 14px;
   border: 1px solid var(--border-color);
-  background: #281733;
+  background: linear-gradient(135deg, #281733, #3b1d54);
 }
 
 .region-photo-frame img {
@@ -613,6 +671,12 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.region-photo-frame img.loaded {
+  opacity: 1;
 }
 
 .photo-badge {
@@ -627,6 +691,7 @@ body {
   font-weight: 700;
   padding: 4px 10px;
   border-radius: 6px;
+  z-index: 2;
 }
 
 .modal-badge {
@@ -933,4 +998,5 @@ body {
   body { overflow: auto; height: auto; }
   .game-container { grid-template-columns: 1fr; height: auto; }
   .map-wrapper { height: 55vh; }
+  .map-coach-floating { width: 260px; }
 }

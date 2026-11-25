@@ -1,7 +1,7 @@
 /**
  * js/data.js
- * 6 Study regions in Turkey with iconic high-resolution photography,
- * simplified coach hints, relief profile types, and region-specific geography quizzes
+ * 6 Study regions in Turkey with dedicated high-resolution photography,
+ * simplified coach hints, relief profile types, and randomized-choice geography quizzes
  */
 
 const GAME_STAGES = [
@@ -11,7 +11,6 @@ const GAME_STAGES = [
     cityLabel: "NEVSEHIR • CAPPADOCIA RELIEF",
     reliefType: "cappadocia",
     difficulty: "Easy",
-    wikiTitle: "Göreme_National_Park",
     photo: "https://images.unsplash.com/photo-1641128324972-af3212f0f6bd?auto=format&fit=crop&w=1000&q=85",
     center: [38.6455, 34.8325],
     zoom: 14,
@@ -28,11 +27,11 @@ const GAME_STAGES = [
     quiz: {
       question: "How were Cappadocia's famous valleys and fairy chimneys in Nevsehir formed?",
       options: [
-        "Wind and water erosion of soft volcanic tuff layers",
         "Glacial ice sheets carving coastal fjords",
-        "Coral reef uplift from the Black Sea"
+        "Coral reef uplift from the Black Sea",
+        "Wind and water erosion of soft volcanic tuff layers"
       ],
-      correctIndex: 0,
+      correctIndex: 2,
       explanation: "Ancient volcanic eruptions covered Nevsehir in soft tuff and basalt, which wind and rain sculpted into fairy chimneys."
     }
   },
@@ -42,7 +41,6 @@ const GAME_STAGES = [
     cityLabel: "AKSARAY • TUZ GOLU BASIN",
     reliefType: "saltlake",
     difficulty: "Easy",
-    wikiTitle: "Lake_Tuz",
     photo: "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=1000&q=85",
     center: [38.3950, 33.9950],
     zoom: 14,
@@ -59,11 +57,11 @@ const GAME_STAGES = [
     quiz: {
       question: "What makes the Tuz Golu (Salt Lake) basin in Central Anatolia geographically unique?",
       options: [
-        "It is a closed endorheic basin where shallow water evaporates into white salt flats",
         "It is Turkey's deepest tectonic ocean trench",
+        "It is a closed endorheic basin where shallow water evaporates into white salt flats",
         "It sits inside an active tropical rainforest"
       ],
-      correctIndex: 0,
+      correctIndex: 1,
       explanation: "Tuz Golu lies in an arid closed basin in Central Anatolia; summer evaporation leaves behind thick natural salt crusts."
     }
   },
@@ -73,7 +71,6 @@ const GAME_STAGES = [
     cityLabel: "BURSA • ULUDAG MASSIF",
     reliefType: "uludag",
     difficulty: "Medium",
-    wikiTitle: "Uludağ",
     photo: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=85",
     center: [40.1045, 29.1330],
     zoom: 14,
@@ -90,11 +87,11 @@ const GAME_STAGES = [
     quiz: {
       question: "What is Uludag's key topographic distinction in Bursa and the Marmara Region?",
       options: [
-        "At 2,543 m, it is the highest peak in the Marmara Region with glacial lakes and steep ridges",
         "It is a flat sea-level delta plain",
-        "It is an underground limestone cave system with no peaks"
+        "It is an underground limestone cave system with no peaks",
+        "At 2,543 m, it is the highest peak in the Marmara Region with glacial lakes and steep ridges"
       ],
-      correctIndex: 0,
+      correctIndex: 2,
       explanation: "Rising to 2,543 m south of Bursa, Uludag is Marmara's highest mountain and features glacial cirques and steep slopes."
     }
   },
@@ -104,7 +101,6 @@ const GAME_STAGES = [
     cityLabel: "DENIZLI • PAMUKKALE TERRACES",
     reliefType: "pamukkale",
     difficulty: "Medium",
-    wikiTitle: "Pamukkale",
     photo: "https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?auto=format&fit=crop&w=1000&q=85",
     center: [37.9240, 29.1230],
     zoom: 14,
@@ -135,7 +131,6 @@ const GAME_STAGES = [
     cityLabel: "RIZE • AYDER & FIRTINA VALLEY",
     reliefType: "ayder",
     difficulty: "Hard",
-    wikiTitle: "Ayder",
     photo: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=85",
     center: [40.9525, 41.1050],
     zoom: 14,
@@ -152,11 +147,11 @@ const GAME_STAGES = [
     quiz: {
       question: "Which topographic feature best describes Rize and the Ayder Highland in the Eastern Black Sea?",
       options: [
-        "Steep V-shaped river valleys and high alpine plateaus carved by heavy rainfall and mountain streams",
         "Flat coastal salt marshes at zero elevation",
+        "Steep V-shaped river valleys and high alpine plateaus carved by heavy rainfall and mountain streams",
         "Dry volcanic desert plateaus with no rivers"
       ],
-      correctIndex: 0,
+      correctIndex: 1,
       explanation: "Rize's Kackar Mountains receive Turkey's highest rainfall, carving deep V-shaped valleys like Firtina Creek below high yaylas."
     }
   },
@@ -166,7 +161,6 @@ const GAME_STAGES = [
     cityLabel: "BITLIS • NEMRUT CRATER CALDERA",
     reliefType: "nemrut",
     difficulty: "Expert",
-    wikiTitle: "Nemrut_(volcano)",
     photo: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1000&q=85",
     center: [38.6200, 42.2420],
     zoom: 13,
@@ -184,11 +178,11 @@ const GAME_STAGES = [
     quiz: {
       question: "How was Mount Nemrut's large caldera and crater lake near Bitlis formed?",
       options: [
-        "Collapse of a volcanic magma chamber followed by water filling the caldera basin",
         "Construction of an artificial concrete hydroelectric dam",
-        "Tidal flooding from the Mediterranean Sea"
+        "Tidal flooding from the Mediterranean Sea",
+        "Collapse of a volcanic magma chamber followed by water filling the caldera basin"
       ],
-      correctIndex: 0,
+      correctIndex: 2,
       explanation: "Mount Nemrut in Bitlis is a stratovolcano whose summit collapsed into a massive caldera now holding freshwater crater lakes."
     }
   }
