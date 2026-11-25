@@ -77,17 +77,17 @@
       <!-- Bottom Map Hint Banner + Floating Next Stage Button -->
       <div class="map-bottom-bar">
         <div id="toast-banner" class="toast-banner">
-          Click inside the pink box on high ground to place your <strong>Total Station</strong>!
+          Click on a high hill inside the pink box to place your <strong>Total Station</strong>!
         </div>
         <button id="btn-next-stage" class="primary-btn next-stage-floating hidden">
-          View 3D Result & Next Region ➔
+          View 3D Relief & Next Region ➔
         </button>
       </div>
     </section>
 
     <!-- RIGHT PANEL: SIMPLE SURVEY GUIDE & GRAPH -->
     <aside class="side-panel">
-      <!-- 1. Station Report & Hot/Cold Surveyor Coach -->
+      <!-- 1. Station Report & Simple Coach -->
       <div class="panel-card station-card">
         <div class="card-header">
           <h2>📡 STATION COACH</h2>
@@ -108,10 +108,10 @@
           </div>
         </div>
         <div id="station-feedback-box" class="feedback-box">
-          💡 <strong>Tip:</strong> Click on a high hill inside the pink dashed box!
+          💡 Click on a high hill inside the pink box!
         </div>
         <div class="surveying-principle-note">
-          🧭 <strong>Field Rule:</strong> Total Stations need <strong>solid high ground</strong> for unobstructed laser Line-of-Sight. Low valleys get blocked by ridges, and water cannot support a stable tripod!
+          🧭 <strong>Quick Rule:</strong> Pick <strong>dry high ground</strong> so hills don't block your laser. Never click on water.
         </div>
       </div>
 
@@ -119,7 +119,7 @@
       <div class="panel-card targets-card">
         <div class="card-header">
           <h2>🎯 TARGETS (M1 - M3)</h2>
-          <span class="small-text">Click item to view profile</span>
+          <span class="small-text">Click to view profile</span>
         </div>
         <ul id="target-list" class="target-list">
           <!-- Filled by JavaScript -->
@@ -140,7 +140,7 @@
           <canvas id="elevationChart"></canvas>
         </div>
         <p id="los-status-text" class="los-note">
-          Dashed line = Laser beam. If pink ground rises above it, a hill blocks your view.
+          Dashed line = Laser. If pink ground goes above it, a hill blocks your view.
         </p>
       </div>
     </aside>
@@ -166,13 +166,13 @@
       <div class="modal-badge">GMT 458 • WEB GIS GEOGAME</div>
       <h2>TOPO-RUSH: Elevation Hunter</h2>
       <p class="modal-desc">
-        Place a <strong>Total Station</strong> inside the pink study box across <strong>6 regions of Turkey</strong> to measure <strong>3 reflector targets</strong> in each stage!
+        Place a <strong>Total Station</strong> inside the pink box across <strong>6 famous regions of Turkey</strong> to measure <strong>3 targets</strong> in each stage!
       </p>
       <ul class="rules-list">
-        <li>🏔️ <strong>Why High Ground Matters:</strong> Total Stations measure via straight infrared laser beams. Standing on high ridges clears terrain obstacles, while low valleys get blocked by hills.</li>
-        <li>🌊 <strong>Why Never Place in Water:</strong> A surveying tripod requires solid, level rock or soil—water causes tripod sinking, instrument damage, and laser refraction.</li>
-        <li>🔥 <strong>Follow the Coach:</strong> After each click, the Station Coach tells you if you are <strong>Warm or Cold</strong> and which elevation you need!</li>
-        <li>⏱️ <strong>Beat the Clock:</strong> You start with <strong>90 seconds</strong>. Moving the station costs <strong>-3s</strong>. Finishing a region gives <strong>+20s</strong>.</li>
+        <li>🏔️ <strong>Pick High Ground:</strong> Higher hills give a clear laser path over valleys and ridges.</li>
+        <li>🌊 <strong>Avoid Water:</strong> Tripods need solid dry ground—never click inside lakes.</li>
+        <li>🔥 <strong>Follow Simple Hints:</strong> The right panel tells you where to move next.</li>
+        <li>⏱️ <strong>Beat the Clock:</strong> Start with <strong>90s</strong>. Moving costs <strong>-3s</strong>; finishing a region adds <strong>+20s</strong>.</li>
       </ul>
       <button id="btn-start-game" class="primary-btn large">Start Game 🚀</button>
     </div>
@@ -194,20 +194,20 @@
         <!-- Filled dynamically for each stage -->
       </ul>
       <div class="ideal-spot-box">
-        <strong>🎯 Where & Why to Place Your Total Station:</strong>
+        <strong>🎯 Best Spot for Your Total Station:</strong>
         <p id="briefing-strategy">Click on a high hill between the targets.</p>
       </div>
       <button id="btn-close-briefing" class="primary-btn large">Got It, Place Station! 📍</button>
     </div>
   </div>
 
-  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (LASER + 3D DEM + QUICK QUIZ) -->
+  <!-- STAGE COMPLETE CINEMATIC VISUALIZATION MODAL (LASER + 3D SIDE RELIEF + REGION QUIZ) -->
   <div id="stage-complete-modal" class="modal-backdrop hidden">
     <div class="modal-content cinematic-card">
-      <div class="modal-badge">✅ 3D ELEVATION MODEL & LASER SURVEY COMPLETE</div>
+      <div class="modal-badge">✅ REGION SURVEYED • 3D SIDE-VIEW RELIEF MODEL</div>
       <h2 id="cinematic-title">Region 1 Mapped Successfully!</h2>
       <p class="modal-desc" id="cinematic-subtitle">
-        Left: Laser beams locked onto the 3 reflector prisms. Right: Generated 3D Digital Elevation Model (DEM):
+        Left: Laser prism lock. Right: 3D side-view elevation relief of the region:
       </p>
 
       <div class="cinematic-stage-box">
@@ -218,10 +218,10 @@
         <!-- Filled dynamically with measured heights & bonus -->
       </div>
 
-      <!-- Quick Field Check Question (Optional Bonus - Never blocks stage progression) -->
+      <!-- Region Topography Question (Never blocks stage progression) -->
       <div class="stage-quiz-box">
         <div class="quiz-header-row">
-          <span class="quiz-tag">🧠 QUICK SURVEY CHECK (+100 PTS BONUS)</span>
+          <span class="quiz-tag">🌍 REGION & TOPOGRAPHY CHECK (+100 PTS BONUS)</span>
         </div>
         <p id="stage-quiz-question" class="quiz-question-text">Question loading...</p>
         <div id="stage-quiz-options" class="quiz-options-grid">

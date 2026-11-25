@@ -1,8 +1,8 @@
 /**
  * js/app.js
- * Leaflet map, Stage Briefing with guaranteed Region Photos (Wikipedia API + CDN),
- * Web Audio SFX, Professional 3D DEM Wireframe & Contour Surface,
- * Stage-End Quick Quiz, and English Hard-Hat Engineer Victory Screen
+ * Leaflet map, Stage Briefing with verified Region Photos,
+ * Simplified Station Coach hints, 3D Side-View Relief Block Model per City,
+ * Region Geography Quizzes, and English Hard-Hat Engineer Victory Screen
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
         labels: [],
         datasets: [
           {
-            label: "Hill / Ground",
+            label: "Ground",
             data: [],
             borderColor: "#f472b6",
             backgroundColor: "rgba(236, 72, 153, 0.25)",
@@ -164,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
             pointRadius: 0
           },
           {
-            label: "Laser Sight",
+            label: "Laser",
             data: [],
             borderColor: "#10b981",
             borderDash: [5, 5],
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
     hudHighscore.textContent = state.highScore;
   }
 
-  // Fetch verified region thumbnail via Wikipedia CORS API if needed
+  // Verified Wikipedia API + Unsplash CDN Photo Loader
   const wikiPhotoCache = {};
   async function resolveRegionPhoto(stage) {
     if (wikiPhotoCache[stage.id]) return wikiPhotoCache[stage.id];
@@ -237,7 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(
           stage.wikiTitle
-        )}&prop=pageimages&format=json&pithumbsize=900&origin=*`;
+        )}&prop=pageimages&format=json&pithumbsize=1000&origin=*`;
         const resp = await fetch(apiUrl);
         if (resp.ok) {
           const data = await resp.json();
@@ -260,13 +260,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const state = game.getState();
     const photoEl = document.getElementById("briefing-photo");
-    photoEl.removeAttribute("referrerpolicy");
 
-    // Load verified Wikipedia API photo first, with Unsplash CDN fallback
+    // Immediately show high-res CDN photo and upgrade to Wikipedia landmark photo if available
     photoEl.src = stage.photo;
     photoEl.onerror = () => {
       photoEl.onerror = null;
-      photoEl.src = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80";
+      photoEl.src = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=85";
     };
 
     resolveRegionPhoto(stage).then((resolvedUrl) => {
@@ -284,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
     listEl.innerHTML = "";
     stage.targets.forEach((t) => {
       const li = document.createElement("li");
-      li.innerHTML = `<span style="font-size:1.25rem;">${t.icon}</span> <strong>${t.id} – ${t.name} (${t.type}):</strong> ${t.desc}`;
+      li.innerHTML = `<span style="font-size:1.25rem;">${t.icon}</span> <strong>${t.id} – ${t.name}:</strong> ${t.desc}`;
       listEl.appendChild(li);
     });
 
@@ -321,9 +320,9 @@ document.addEventListener("DOMContentLoaded", () => {
     targetsProgressEl.textContent = `0 / ${stage.targets.length}`;
     profileSelector.disabled = true;
     btnNextStage.classList.add("hidden");
-    losStatusText.textContent = "Dashed line = Laser beam. If pink ground rises above it, a hill blocks your view.";
+    losStatusText.textContent = "Dashed line = Laser. If pink ground goes above it, a hill blocks your view.";
     losStatusText.style.color = "#d8b4e2";
-    setFeedback(`💡 <strong>Strategy:</strong> ${stage.hint}`, "info");
+    setFeedback(`💡 ${stage.hint}`, "info");
 
     const rectBounds = [
       [stage.bounds.minLat, stage.bounds.minLng],
@@ -343,11 +342,11 @@ document.addEventListener("DOMContentLoaded", () => {
         fillColor: "#ec4899",
         fillOpacity: 0.24,
         weight: 1.5
-      }).bindTooltip("💧 Crater Lake: Solid ground required for Total Station tripod").addTo(boundaryLayer);
+      }).bindTooltip("💧 Crater Lake: Click dry ground instead").addTo(boundaryLayer);
     }
 
     map.flyTo(stage.center, stage.zoom, { duration: 1.0 });
-    showBanner(`💡 <strong>Tip:</strong> ${stage.hint}`);
+    showBanner(`💡 ${stage.hint}`);
 
     if (showBriefingPopup) {
       openStageBriefing(stage);
@@ -382,7 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const marker = L.marker([t.lat, t.lng], { icon }).addTo(targetMarkersLayer);
-      marker.bindTooltip(`${t.icon} ${t.id} (${t.type}): ${t.name}${isRead ? ` • ${targetElevations[t.id]} m` : ""}`);
+      marker.bindTooltip(`${t.icon} ${t.id}: ${t.name}${isRead ? ` (${targetElevations[t.id]} m)` : ""}`);
 
       const li = document.createElement("li");
       li.className = "target-item";
@@ -443,8 +442,8 @@ document.addEventListener("DOMContentLoaded", () => {
       playErrorSound();
       const remLives = game.penalizeInvalidPlacement();
       updateHUD(game.getState());
-      setFeedback("❄️ <strong>OUTSIDE SURVEY NETWORK:</strong> A Total Station must stay inside the pink control zone near M1–M3 to maintain geometric accuracy!", "bad");
-      showBanner("⚠️ Stay inside the pink dashed survey zone! <strong>-1 Life</strong>", "error");
+      setFeedback("❄️ <strong>Outside Box:</strong> Click inside the pink dashed box!", "bad");
+      showBanner("⚠️ Click inside the pink box! <strong>-1 Life</strong>", "error");
       if (remLives === 0) triggerGameOver(false);
       return;
     }
@@ -460,8 +459,8 @@ document.addEventListener("DOMContentLoaded", () => {
         playErrorSound();
         const remLives = game.penalizeInvalidPlacement();
         updateHUD(game.getState());
-        setFeedback("❄️ <strong>WATER HAZARD:</strong> You cannot mount a Total Station tripod on water! Deep water prevents stable leveling and distorts laser beams. Click on solid high rock on the east rim.", "bad");
-        showBanner("🌊 Cannot mount tripod in water! Click solid ground. <strong>-1 Life</strong>", "error");
+        setFeedback("❄️ <strong>Water!</strong> Tripods need dry ground. Click on the east ridge.", "bad");
+        showBanner("🌊 Water! Click on dry ground. <strong>-1 Life</strong>", "error");
         if (remLives === 0) triggerGameOver(false);
         return;
       }
@@ -469,7 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     isProcessingClick = true;
     playDeploySound();
-    showBanner("📡 Total Station locked! Firing laser beams...");
+    showBanner("📡 Measuring targets...");
 
     const deployInfo = game.registerStationDeployment();
     updateHUD(game.getState());
@@ -590,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateHUD(game.getState());
     renderTargetMarkersAndList(stage, result.readSet, statusMap);
 
-    buildHotColdCoaching(groundHeight, visibleIds, blockedDetails, farDetails, highestObstacle, result);
+    buildSimpleCoaching(groundHeight, visibleIds, blockedDetails, farDetails, highestObstacle, result);
 
     profileSelector.disabled = false;
     profileSelector.value = "0";
@@ -612,9 +611,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const bonusMsg = result.singleStationBonus
-        ? ` 🏆 <strong>One-Setup Bonus (+${result.singleStationBonus} pts)!</strong>`
+        ? ` 🏆 <strong>1-Shot Bonus (+${result.singleStationBonus})!</strong>`
         : "";
-      showBanner(`🎉 All 3 targets measured!${bonusMsg}`, "success");
+      showBanner(`🎉 All 3 targets done!${bonusMsg}`, "success");
       btnNextStage.classList.remove("hidden");
 
       setTimeout(() => {
@@ -623,24 +622,63 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       if (result.newlyReadCount > 0) playTargetSuccessSound();
       const penaltyTxt = deployInfo.timePenalty ? ` (-${deployInfo.timePenalty}s)` : "";
-      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Check the Station Coach advice on the right!`);
+      showBanner(`📡 ${result.readSet.size}/3 done${penaltyTxt}. Check the short tip on the right!`);
     }
 
     isProcessingClick = false;
   });
 
   // =========================================================================
-  // DUAL CINEMATIC VISUALIZATION + QUICK STAGE QUIZ:
-  // LEFT: Total Station -> 3 Reflector Prisms | RIGHT: High-Res 3D DEM Surface
+  // SIMPLE & SHORT COACH HINTS (Easy to read at a glance)
+  // =========================================================================
+  function buildSimpleCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
+    if (result.stageCompleted) {
+      setFeedback(`🔥 <strong>Great job (${Math.round(height)} m)!</strong> All 3 targets measured!`, "good");
+      return;
+    }
+
+    if (farDetails.length > 0) {
+      const f = farDetails[0];
+      setFeedback(
+        `⚠️ <strong>Too far from ${f.id}!</strong> Move <strong>${f.dir}</strong> toward the center.`,
+        "warn"
+      );
+      return;
+    }
+
+    const recommendedHeight = Math.round(highestObstacle + 8);
+    const dirHint = blockedDetails.length > 0 ? blockedDetails[0].dir : "center";
+
+    if (visibleIds.length === 2) {
+      setFeedback(
+        `🔥 <strong>Almost there (2/3)!</strong> Move slightly higher (<strong>>${recommendedHeight} m</strong>) toward <strong>${dirHint}</strong>.`,
+        "good"
+      );
+    } else if (visibleIds.length === 1) {
+      setFeedback(
+        `🌤️ <strong>Good start (1/3)!</strong> A hill blocks the rest. Pick a higher hill (<strong>>${recommendedHeight} m</strong>) to the <strong>${dirHint}</strong>.`,
+        "warn"
+      );
+    } else {
+      setFeedback(
+        `❄️ <strong>Too low (0/3)!</strong> Hills block your laser. Click a higher hill (<strong>>${recommendedHeight} m</strong>) to the <strong>${dirHint}</strong>.`,
+        "bad"
+      );
+    }
+  }
+
+  // =========================================================================
+  // DUAL CINEMATIC VISUALIZATION + REGION TOPOGRAPHY QUIZ:
+  // LEFT: Total Station -> 3 Prisms | RIGHT: City/Region 3D Side-View Relief Block
   // =========================================================================
   const btnContinueNext = document.getElementById("btn-continue-next");
 
   function openCinematicSurveyModal(stage, singleBonus) {
     game.pauseTimer();
 
-    document.getElementById("cinematic-title").textContent = `${stage.name} — 3D DEM Generated!`;
+    document.getElementById("cinematic-title").textContent = `${stage.name} — Mapped!`;
     document.getElementById("cinematic-subtitle").textContent =
-      `Left: Laser beams locked onto the 3 reflector prisms. Right: Hypsometric 3D Digital Elevation Model (DEM):`;
+      `Left: Laser lock on 3 targets. Right: 3D side-view elevation relief of ${stage.cityLabel.split("•")[0].trim()}:`;
 
     const summaryEl = document.getElementById("cinematic-summary");
     summaryEl.innerHTML =
@@ -649,7 +687,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("") +
       (singleBonus ? `<span style="color:#34d399;font-weight:700;">🏆 +${singleBonus} Bonus</span>` : "");
 
-    // Setup Quick Stage Quiz (Never blocks progress even if answered wrong)
     setupStageQuiz(stage);
 
     stageCompleteModal.classList.remove("hidden");
@@ -677,7 +714,6 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.textContent = `${String.fromCharCode(65 + idx)}. ${optText}`;
 
       btn.addEventListener("click", () => {
-        // Lock all option buttons after answer
         const allBtns = optionsEl.querySelectorAll("button");
         allBtns.forEach((b, bIdx) => {
           b.disabled = true;
@@ -693,7 +729,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           btn.classList.add("wrong-ans");
           playTone(300, 0.14, "sine", 0, 0.08);
-          feedbackEl.innerHTML = `💡 <strong>Good to know:</strong> ${qObj.explanation}`;
+          feedbackEl.innerHTML = `💡 <strong>Region Fact:</strong> ${qObj.explanation}`;
           feedbackEl.className = "quiz-feedback info";
         }
 
@@ -706,23 +742,78 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Hypsometric color helper for professional 3D DEM surface
-  function getHypsometricColor(normZ, alpha = 0.85) {
-    // normZ from 0 (valley) -> 0.5 (mid plateau) -> 1.0 (high ridge)
+  // Hypsometric color helper for 3D side-view relief model
+  function getHypsometricColor(normZ, alpha = 0.9) {
     const t = Math.max(0, Math.min(1, normZ));
     let r, g, b;
-    if (t < 0.5) {
-      const k = t * 2;
+    if (t < 0.35) {
+      const k = t / 0.35;
       r = Math.round(56 + (16 - 56) * k);
       g = Math.round(189 + (185 - 189) * k);
       b = Math.round(248 + (129 - 248) * k);
+    } else if (t < 0.72) {
+      const k = (t - 0.35) / 0.37;
+      r = Math.round(16 + (250 - 16) * k);
+      g = Math.round(185 + (204 - 185) * k);
+      b = Math.round(129 + (21 - 129) * k);
     } else {
-      const k = (t - 0.5) * 2;
-      r = Math.round(16 + (244 - 16) * k);
-      g = Math.round(185 + (114 - 185) * k);
-      b = Math.round(129 + (182 - 129) * k);
+      const k = (t - 0.72) / 0.28;
+      r = Math.round(250 + (244 - 250) * k);
+      g = Math.round(204 + (114 - 204) * k);
+      b = Math.round(21 + (182 - 21) * k);
     }
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  // City-specific 3D side-view relief height generator
+  function getRegionReliefHeight(reliefType, nx, nz, phase) {
+    // nx in [-1, 1] (left-to-right cross-section), nz in [-1, 1] (front-to-back depth)
+    const gentleWave = Math.sin((nx + phase) * 3) * 2.5;
+    switch (reliefType) {
+      case "cappadocia": {
+        // Mesas + fairy chimney spires + valley dip
+        const valley = -12 * Math.exp(-((nx + 0.1) ** 2) * 5);
+        const spire1 = 28 * Math.exp(-((nx - 0.45) ** 2 + (nz + 0.2) ** 2) * 18);
+        const spire2 = 24 * Math.exp(-((nx + 0.55) ** 2 + (nz - 0.25) ** 2) * 16);
+        const plateau = 18 * Math.exp(-((nx - 0.1) ** 2 + (nz + 0.45) ** 2) * 4);
+        return 18 + valley + spire1 + spire2 + plateau + gentleWave;
+      }
+      case "saltlake": {
+        // Flat salt pan in front/left + gentle Anatolian steppe hills in back
+        const flatSalt = 6;
+        const steppeHill = 22 * Math.exp(-((nx - 0.35) ** 2 + (nz + 0.3) ** 2) * 2.6);
+        const lowMound = 14 * Math.exp(-((nx + 0.45) ** 2 + (nz + 0.2) ** 2) * 3.0);
+        return flatSalt + steppeHill + lowMound + Math.sin(nx * 4) * 1.5;
+      }
+      case "uludag": {
+        // Dramatic alpine summit massif + glacial cirque shoulder
+        const mainPeak = 44 * Math.exp(-((nx - 0.05) ** 2 + (nz + 0.1) ** 2) * 2.4);
+        const eastShoulder = 26 * Math.exp(-((nx - 0.58) ** 2 + (nz - 0.15) ** 2) * 4.2);
+        const westRidge = 22 * Math.exp(-((nx + 0.55) ** 2 + (nz + 0.2) ** 2) * 4.0);
+        return 8 + mainPeak + eastShoulder + westRidge + gentleWave;
+      }
+      case "pamukkale": {
+        // Stepped travertine terraces descending from high Hierapolis plateau
+        const slope = (nx + 1) * 14;
+        const steps = Math.floor((nx + 1) * 4.5) * 3.8;
+        const ridgeDepth = 8 * Math.exp(-(nz ** 2) * 2.5);
+        return 6 + slope * 0.45 + steps + ridgeDepth;
+      }
+      case "ayder": {
+        // Deep V-shaped Firtina river valley between two steep Kackar mountain walls
+        const vValley = Math.abs(nx) * 36;
+        const alpinePeak = 14 * Math.exp(-((nz + 0.3) ** 2) * 2.5);
+        return 5 + vValley + alpinePeak + Math.sin(nz * 6) * 2.5;
+      }
+      case "nemrut":
+      default: {
+        // Volcanic caldera rim with sunken crater lake basin in the middle
+        const distFromCrater = Math.sqrt((nx + 0.12) ** 2 + nz ** 2);
+        const rimRing = 36 * Math.exp(-((distFromCrater - 0.58) ** 2) * 14);
+        const calderaFloor = distFromCrater < 0.42 ? 5 : 12;
+        return calderaFloor + rimRing;
+      }
+    }
   }
 
   function startSurveyCanvasAnimation(stage) {
@@ -734,11 +825,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let frame = 0;
 
     const reflectors = [
-      { id: "M1", icon: stage.targets[0].icon, elev: targetElevations["M1"] || 1210, x: 205, y: 56 },
-      { id: "M2", icon: stage.targets[1].icon, elev: targetElevations["M2"] || 1195, x: 235, y: 126 },
-      { id: "M3", icon: stage.targets[2].icon, elev: targetElevations["M3"] || 1205, x: 198, y: 192 }
+      { id: "M1", icon: stage.targets[0].icon, elev: targetElevations["M1"] || 1210, x: 195, y: 56 },
+      { id: "M2", icon: stage.targets[1].icon, elev: targetElevations["M2"] || 1195, x: 222, y: 126 },
+      { id: "M3", icon: stage.targets[2].icon, elev: targetElevations["M3"] || 1205, x: 188, y: 192 }
     ];
-    const station = { x: 46, y: 130 };
+    const station = { x: 42, y: 130 };
 
     const h0 = lastStationHeight || 1200;
     const h1 = targetElevations["M1"] || 1210;
@@ -746,14 +837,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const h3 = targetElevations["M3"] || 1205;
     const minH = Math.min(h0, h1, h2, h3) - 15;
     const maxH = Math.max(h0, h1, h2, h3) + 15;
-    const avgH = (h0 + h1 + h2 + h3) / 4;
 
     function render() {
       frame += 1;
       ctx.clearRect(0, 0, w, h);
 
-      // Subtle CAD background grid
-      ctx.strokeStyle = "rgba(236, 72, 153, 0.09)";
+      // Subtle CAD grid
+      ctx.strokeStyle = "rgba(236, 72, 153, 0.08)";
       ctx.lineWidth = 1;
       for (let gx = 0; gx < w; gx += 24) {
         ctx.beginPath();
@@ -766,8 +856,8 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.strokeStyle = "rgba(244, 114, 182, 0.35)";
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.moveTo(266, 12);
-      ctx.lineTo(266, h - 12);
+      ctx.moveTo(252, 12);
+      ctx.lineTo(252, h - 12);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -776,7 +866,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // ---------------------------------------------------------------------
       ctx.fillStyle = "#f472b6";
       ctx.font = "bold 10px JetBrains Mono, monospace";
-      ctx.fillText("1. LASER PRISM LOCK", 14, 18);
+      ctx.fillText("1. LASER PRISM LOCK", 12, 18);
 
       ctx.fillStyle = "rgba(16, 185, 129, 0.16)";
       ctx.strokeStyle = "#10b981";
@@ -874,131 +964,136 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.fillText(`STN ${Math.round(lastStationHeight)}m`, station.x - 28, station.y + 49);
 
       // ---------------------------------------------------------------------
-      // RIGHT PANEL: High-Resolution Hypsometric 3D DEM Surface + Contours
+      // RIGHT PANEL: 3D Side-View Relief Block Model of the City/Region
       // ---------------------------------------------------------------------
       ctx.fillStyle = "#34d399";
       ctx.font = "bold 10px JetBrains Mono, monospace";
-      ctx.fillText("2. 3D DEM SURFACE & CONTOURS", 280, 18);
+      ctx.fillText(`2. ${stage.cityLabel}`, 264, 18);
 
-      const cx = 398;
-      const cy = 152;
-      const angle = frame * 0.018;
-      const cosA = Math.cos(angle);
-      const sinA = Math.sin(angle);
-      const gridN = 14;
-      const scale = 11.5;
+      // Oblique 3D side-view perspective (front geological cross-section + 3D terrain)
+      const originX = 274;
+      const baseY = 205;
+      const widthX = 185;
+      const depthShiftX = 46;
+      const depthShiftY = -44;
+      const cols = 22;
+      const rows = 12;
+      const sway = Math.sin(frame * 0.025) * 0.06;
 
-      function computeTerrainZ(nx, nz) {
-        const ridgeM1 = ((h1 - avgH) * 0.45 + 22) * Math.exp(-((nx - 0.48) ** 2 + (nz + 0.42) ** 2) * 3.8);
-        const basinM2 = ((h2 - avgH) * 0.45 + 14) * Math.exp(-((nx + 0.46) ** 2 + (nz - 0.35) ** 2) * 3.8);
-        const ridgeM3 = ((h3 - avgH) * 0.45 + 19) * Math.exp(-((nx - 0.32) ** 2 + (nz - 0.48) ** 2) * 4.0);
-        const stnPeak = ((h0 - avgH) * 0.52 + 28) * Math.exp(-(nx ** 2 + nz ** 2) * 2.8);
-        const undulation = Math.sin(nx * 5) * 3.2 + Math.cos(nz * 5) * 2.8;
-        return ridgeM1 + basinM2 + ridgeM3 + stnPeak + undulation;
+      function projectSide3D(colIdx, rowIdx) {
+        const u = colIdx / cols; // 0 (left) -> 1 (right)
+        const v = rowIdx / rows; // 0 (front cut wall) -> 1 (back horizon)
+        const nx = u * 2 - 1;
+        const nz = v * 2 - 1;
+        const elev = getRegionReliefHeight(stage.reliefType, nx, nz, sway);
+
+        const sx = originX + u * widthX + v * depthShiftX;
+        const sy = baseY + v * depthShiftY - elev;
+        return { sx, sy, elev, u, v };
       }
 
-      function project3D(gx, gz) {
-        const nx = gx / (gridN / 2);
-        const nz = gz / (gridN / 2);
-        const yElev = computeTerrainZ(nx, nz);
-
-        const rx = gx * cosA - gz * sinA;
-        const rz = gx * sinA + gz * cosA;
-
-        const sx = cx + rx * scale;
-        const sy = cy + rz * (scale * 0.5) - yElev;
-        return { sx, sy, yElev, rz };
+      const grid = [];
+      for (let r = 0; r <= rows; r++) {
+        grid[r] = [];
+        for (let c = 0; c <= cols; c++) {
+          grid[r][c] = projectSide3D(c, r);
+        }
       }
 
-      // 3D Base Pedestal Frame
-      const baseCorners = [
-        project3D(-gridN / 2, -gridN / 2),
-        project3D(gridN / 2, -gridN / 2),
-        project3D(gridN / 2, gridN / 2),
-        project3D(-gridN / 2, gridN / 2)
-      ];
-      ctx.strokeStyle = "rgba(216, 180, 226, 0.25)";
-      ctx.lineWidth = 1;
+      // Draw back-to-front surface strips with hypsometric elevation coloring
+      for (let r = rows - 1; r >= 0; r--) {
+        for (let c = 0; c < cols; c++) {
+          const p00 = grid[r][c];
+          const p10 = grid[r][c + 1];
+          const p11 = grid[r + 1][c + 1];
+          const p01 = grid[r + 1][c];
+
+          const avgElev = (p00.elev + p10.elev + p11.elev + p01.elev) / 4;
+          const normZ = (avgElev - 4) / 42;
+
+          ctx.fillStyle = getHypsometricColor(normZ, 0.42);
+          ctx.strokeStyle = getHypsometricColor(normZ, 0.85);
+          ctx.lineWidth = 0.75;
+
+          ctx.beginPath();
+          ctx.moveTo(p00.sx, p00.sy);
+          ctx.lineTo(p10.sx, p10.sy);
+          ctx.lineTo(p11.sx, p11.sy);
+          ctx.lineTo(p01.sx, p01.sy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      }
+
+      // Solid Front Geological Cross-Section Wall (Side-View Cutaway)
       ctx.beginPath();
-      baseCorners.forEach((c, i) => {
-        const baseY = c.sy + c.yElev + 10;
-        if (i === 0) ctx.moveTo(c.sx, baseY);
-        else ctx.lineTo(c.sx, baseY);
-      });
+      ctx.moveTo(originX, baseY + 12);
+      for (let c = 0; c <= cols; c++) {
+        ctx.lineTo(grid[0][c].sx, grid[0][c].sy);
+      }
+      ctx.lineTo(originX + widthX, baseY + 12);
       ctx.closePath();
+      const wallGrad = ctx.createLinearGradient(0, baseY - 45, 0, baseY + 12);
+      wallGrad.addColorStop(0, "rgba(236, 72, 153, 0.65)");
+      wallGrad.addColorStop(1, "rgba(27, 16, 34, 0.95)");
+      ctx.fillStyle = wallGrad;
+      ctx.fill();
+      ctx.strokeStyle = "#f472b6";
+      ctx.lineWidth = 1.4;
       ctx.stroke();
 
-      // Build mesh points
-      const pts = [];
-      for (let i = 0; i <= gridN; i++) {
-        pts[i] = [];
-        for (let j = 0; j <= gridN; j++) {
-          const gx = i - gridN / 2;
-          const gz = j - gridN / 2;
-          pts[i][j] = project3D(gx, gz);
-        }
+      // Right Side Geological Cross-Section Wall
+      ctx.beginPath();
+      ctx.moveTo(originX + widthX, baseY + 12);
+      for (let r = 0; r <= rows; r++) {
+        ctx.lineTo(grid[r][cols].sx, grid[r][cols].sy);
       }
+      ctx.lineTo(originX + widthX + depthShiftX, baseY + depthShiftY + 12);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(40, 23, 51, 0.9)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(244, 114, 182, 0.6)";
+      ctx.stroke();
 
-      // Collect cells and painter-sort back-to-front by depth (rz)
-      const cells = [];
-      for (let i = 0; i < gridN; i++) {
-        for (let j = 0; j < gridN; j++) {
-          const p1 = pts[i][j];
-          const p2 = pts[i + 1][j];
-          const p3 = pts[i + 1][j + 1];
-          const p4 = pts[i][j + 1];
-          const avgDepth = (p1.rz + p2.rz + p3.rz + p4.rz) / 4;
-          const avgElev = (p1.yElev + p2.yElev + p3.yElev + p4.yElev) / 4;
-          cells.push({ p1, p2, p3, p4, avgDepth, avgElev });
-        }
-      }
-      cells.sort((a, b) => a.avgDepth - b.avgDepth);
-
-      cells.forEach((cell) => {
-        const normZ = (cell.avgElev + 5) / 48;
-        ctx.fillStyle = getHypsometricColor(normZ, 0.34);
-        ctx.strokeStyle = getHypsometricColor(normZ, 0.85);
-        ctx.lineWidth = 0.85;
-
+      // Crater lake water sheen for Nemrut stage
+      if (stage.reliefType === "nemrut") {
+        const lakeCenter = grid[Math.floor(rows * 0.5)][Math.floor(cols * 0.44)];
+        ctx.fillStyle = "rgba(56, 189, 248, 0.55)";
         ctx.beginPath();
-        ctx.moveTo(cell.p1.sx, cell.p1.sy);
-        ctx.lineTo(cell.p2.sx, cell.p2.sy);
-        ctx.lineTo(cell.p3.sx, cell.p3.sy);
-        ctx.lineTo(cell.p4.sx, cell.p4.sy);
-        ctx.closePath();
+        ctx.ellipse(lakeCenter.sx, lakeCenter.sy + 2, 22, 8, 0, 0, Math.PI * 2);
         ctx.fill();
+      }
+
+      // Pin measured targets & station on the 3D relief surface
+      const pins = [
+        { label: `STN ${Math.round(h0)}m`, pt: grid[Math.floor(rows * 0.55)][Math.floor(cols * 0.5)], color: "#fde047" },
+        { label: `M1`, pt: grid[Math.floor(rows * 0.75)][Math.floor(cols * 0.75)], color: "#34d399" },
+        { label: `M2`, pt: grid[Math.floor(rows * 0.35)][Math.floor(cols * 0.25)], color: "#38bdf8" }
+      ];
+
+      pins.forEach((p) => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.pt.sx, p.pt.sy, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#130b18";
+        ctx.lineWidth = 1;
         ctx.stroke();
+
+        ctx.fillStyle = "#fdf2f8";
+        ctx.font = "bold 9px JetBrains Mono, monospace";
+        ctx.fillText(p.label, p.pt.sx - 12, p.pt.sy - 7);
       });
 
-      // Vertical Drop-Line & Peak Pin at Total Station Summit
-      const peakPt = pts[gridN / 2][gridN / 2];
-      ctx.strokeStyle = "#fde047";
-      ctx.setLineDash([2, 2]);
-      ctx.beginPath();
-      ctx.moveTo(peakPt.sx, peakPt.sy);
-      ctx.lineTo(peakPt.sx, peakPt.sy + peakPt.yElev + 8);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = "#fde047";
-      ctx.beginPath();
-      ctx.arc(peakPt.sx, peakPt.sy, 4.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#130b18";
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      ctx.fillStyle = "#fdf2f8";
-      ctx.font = "bold 10px JetBrains Mono, monospace";
-      ctx.fillText(`Z=${Math.round(h0)}m`, peakPt.sx - 20, peakPt.sy - 8);
-
-      // Hypsometric Elevation Legend Bar on far right
+      // Elevation Scale Legend Bar on far right
       const barX = 516;
       const barY = 42;
-      const barH = 140;
+      const barH = 148;
       const grad = ctx.createLinearGradient(0, barY, 0, barY + barH);
       grad.addColorStop(0, "#f472b6");
-      grad.addColorStop(0.5, "#10b981");
+      grad.addColorStop(0.35, "#facc15");
+      grad.addColorStop(0.7, "#10b981");
       grad.addColorStop(1, "#38bdf8");
       ctx.fillStyle = grad;
       ctx.fillRect(barX, barY, 7, barH);
@@ -1007,8 +1102,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       ctx.fillStyle = "#d8b4e2";
       ctx.font = "9px JetBrains Mono, monospace";
-      ctx.fillText(`${Math.round(maxH)}m`, barX - 14, barY - 5);
-      ctx.fillText(`${Math.round(minH)}m`, barX - 14, barY + barH + 11);
+      ctx.fillText(`${Math.round(maxH)}m`, barX - 15, barY - 5);
+      ctx.fillText(`${Math.round(minH)}m`, barX - 15, barY + barH + 11);
 
       cinematicAnimId = requestAnimationFrame(render);
     }
@@ -1028,42 +1123,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  function buildHotColdCoaching(height, visibleIds, blockedDetails, farDetails, highestObstacle, result) {
-    if (result.stageCompleted) {
-      setFeedback(
-        `🔥 <strong>BULLSEYE! High Ground Advantage (${Math.round(height)} m):</strong> Elevated station cleared every ridge and locked all 3 reflector prisms!`,
-        "good"
-      );
-      return;
-    }
-
-    let tempBadge = "";
-    let level = "warn";
-
-    if (visibleIds.length === 2) {
-      tempBadge = "🔥 <strong>VERY HOT (2/3 Visible):</strong> Almost there! Just 1 target left.";
-      level = "good";
-    } else if (visibleIds.length === 1) {
-      tempBadge = "🌤️ <strong>WARM (1/3 Visible):</strong> Good start! Move to a higher bench to clear the remaining ridge.";
-      level = "warn";
-    } else {
-      tempBadge = "❄️ <strong>COLD (0/3 Visible):</strong> Station is too low—surrounding hills block the straight laser beam.";
-      level = "bad";
-    }
-
-    let advice = "";
-    if (farDetails.length > 0) {
-      const f = farDetails[0];
-      advice = `📏 <b>Optical Range:</b> <b>${f.id}</b> is ${f.dist}m away (beyond max laser range). Move <b>${f.dir}</b> toward the center.`;
-    } else if (blockedDetails.length > 0) {
-      const b = blockedDetails[0];
-      const recommendedHeight = Math.round(highestObstacle + 10);
-      advice = `⛰️ <b>Line-of-Sight Blocked:</b> A <b>${b.ridgeHeight} m</b> ridge sits between your station and <b>${b.id}</b>. Move to ground above <b>${recommendedHeight} m</b> toward the <b>${b.dir}</b>!`;
-    }
-
-    setFeedback(`${tempBadge}<br>${advice}`, level);
-  }
-
   function drawProfileChart(profile) {
     if (!profile || !elevationChart) return;
 
@@ -1082,13 +1141,13 @@ document.addEventListener("DOMContentLoaded", () => {
     elevationChart.update();
 
     if (profile.status === "visible") {
-      losStatusText.innerHTML = `✅ <strong>${profile.target.id}:</strong> Clear sight! (${profile.distanceMeters}m away)`;
+      losStatusText.innerHTML = `✅ <strong>${profile.target.id}:</strong> Clear view! (${profile.distanceMeters}m away)`;
       losStatusText.style.color = "#10b981";
     } else if (profile.status === "out_of_range") {
       losStatusText.innerHTML = `⚠️ <strong>${profile.target.id}:</strong> Too far (${profile.distanceMeters}m). Move closer.`;
       losStatusText.style.color = "#fbbf24";
     } else {
-      losStatusText.innerHTML = `❌ <strong>${profile.target.id}:</strong> Pink hill crosses the dashed laser line!`;
+      losStatusText.innerHTML = `❌ <strong>${profile.target.id}:</strong> Pink hill blocks the laser line!`;
       losStatusText.style.color = "#f43f5e";
     }
   }
