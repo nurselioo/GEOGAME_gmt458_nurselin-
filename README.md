@@ -39,27 +39,28 @@
 
 6.  **Persistent High-Score & Sound Effects:** Saves the player's all-time best score via `localStorage` and synthesizes Web Audio API feedback tones.
 
+
 ## 2. Frontend Layout & Wireframe Sketch
 
-+---------------------------------------------------------------------------------------------------+
-| 🌍 TOPO-RUSH  [Total Station Elevation & Line-of-Sight Game] | 🔊 | STAGE | TIME | LIVES | SCORE |
-+---------------------------------------------------------------+-----------------------------------+
-|                                                               | 📐 SURVEY TELEMETRY               |
-|  [● Region Name & Difficulty]           [Guide | Topo | Sat]  | Station Z | Setups | Measured     |
-|                                                               +-----------------------------------+
-|  +----------------------------------------+                   | 🎯 TARGETS (M1 - M3)              |
-|  | 👷 FIELD ENGINEER      [Cursor: ~1245m]|                   | • 🏔️ M1 - Target 1   ✅ 1210 m   |
-|  | "Pick a hill above >1230m toward East!"|                   | • 🏞️ M2 - Target 2   ❌ Blocked  |
-|  +------\/--------------------------------+                   | • 🏛️ M3 - Target 3   ⏳ Waiting  |
-|      ( 👷 ) [Chief Surveyor]                                  +-----------------------------------+
-|                                                               | 📈 DYNAMIC TERRAIN & LASER RAY    |
-|                     [ Interactive Leaflet ]                   | [Ray ➔ M1 ▼]                      |
-|                     [   Topographic Map   ]                   | +-------------------------------+ |
-|                     [   with Pink Survey  ]                   | |  Chart.js Elevation Profile   | |
-|                     [   Boundary & Lasers ]                   | |  --- Laser Ray vs Terrain --- | |
-|                                                               | +-------------------------------+ |
-|         [ Toast Hint Banner ]   [ View 3D Relief & Next ➔ ]   | Clearance: +12.4 m | Min Z: 1228m |
-+---------------------------------------------------------------+-----------------------------------+
+The interface uses a full-viewport split-screen GIS dashboard (`1fr 425px` CSS Grid on desktop, stacked responsive layout on mobile):
+
+```text
++-----------------------------------------------------------------------+
+| 🌍 TOPO-RUSH  |  🔊 Sound | STAGE | TIME | LIVES | SCORE | BEST       |
++-----------------------------------------------+-----------------------+
+| [● Region Title]         [Guide | Topo | Sat] | 📐 SURVEY TELEMETRY   |
+|                                               | Station Z | Setups    |
+| +-----------------------------------+         +-----------------------+
+| | 👷 FIELD ENGINEER [Cursor: ~1245m]|         | 🎯 TARGETS (M1 - M3)  |
+| | "Pick a hill >1230m toward East!" |         | • M1: ✅ 1210 m       |
+| +---\/------------------------------+         | • M2: ❌ Blocked      |
+|   ( 👷 ) [Chief Surveyor]                     | • M3: ⏳ Waiting      |
+|                                               +-----------------------+
+|         [ Interactive Leaflet Map ]           | 📈 ELEVATION & LASER  |
+|         [  Contours & Laser Rays  ]           | [Ray ➔ M1 ▼]          |
+|                                               | [ Chart.js Profile ]  |
+|   [ Toast Hint ]  [ View 3D Relief ➔ ]        | Clearance | Min Z     |
++-----------------------------------------------+-----------------------+
 
 
 ## 3. Game Progression, Tasks, Lives, Scoring & Temporal Mechanics
@@ -97,9 +98,9 @@ Players progress through **6 increasingly complex regions of Turkey** (`Easy` �
 * **HTML5 Canvas 2D & Web Audio API:** Renders the post-stage 3D isometric city relief block models, the victory screen **3D Relief Map of Turkey**, and procedural audio feedback.
 
 ### Openly Available Datasets
-* **OpenTopoMap (SRTM Contours):** Topographic basemap tiles (`https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png`).
+* **OpenTopoMap (SRTM Contours):** Topographic basemap tiles .
 * **Esri World Imagery:** High-resolution satellite basemap layer.
-* **Open-Elevation API (SRTM DEM):** Elevation sampling (`https://api.open-elevation.com/api/v1/lookup`) along 12-point transects per target.
+* **Open-Elevation API (SRTM DEM):** Elevation sampling  along 12-point transects per target.
 * **Wikipedia REST API:** Fetches verified landmark photography for each stage briefing modal.
 
 ## 5. Implementation Details
